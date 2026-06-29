@@ -5,35 +5,35 @@ import { formatCurrency, formatDate } from './formatters';
    Build WhatsApp / text summary of invoice
 ───────────────────────────────────────────── */
 const buildInvoiceText = (invoice, businessInfo) => {
-  const biz   = businessInfo.business_name || 'Dapooerku';
+  const biz   = businessInfo.business_name || 'InvoiceTa';
   const items = Array.isArray(invoice.items) ? invoice.items : [];
   const lines = items.map(
     (it) => `  • ${it.description} (${it.quantity}x) — ${formatCurrency(it.quantity * it.price)}`
   );
 
   return [
-    `💖 *INVOICE dari ${biz}*`,
+    `*INVOICE dari ${biz}*`,
     ``,
-    `📄 No: *${invoice.invoice_number}*`,
-    `📅 Tanggal: ${formatDate(invoice.created_at)}`,
+    `No: *${invoice.invoice_number}*`,
+    `Tanggal: ${formatDate(invoice.created_at)}`,
     ``,
-    `👤 *Kepada:* ${invoice.customer_name}`,
-    invoice.customer_phone ? `📱 ${invoice.customer_phone}` : '',
-    invoice.customer_email ? `📧 ${invoice.customer_email}` : '',
+    `*Kepada:* ${invoice.customer_name}`,
+    invoice.customer_phone ? `${invoice.customer_phone}` : '',
+    invoice.customer_email ? `${invoice.customer_email}` : '',
     ``,
     `🛒 *Detail Item:*`,
     ...lines,
     ``,
     invoice.tax > 0
-      ? `🧾 Subtotal: ${formatCurrency(invoice.subtotal)}\n💰 Pajak (${invoice.tax}%): ${formatCurrency(invoice.subtotal * invoice.tax / 100)}`
+      ? `Subtotal: ${formatCurrency(invoice.subtotal)}\n💰 Pajak (${invoice.tax}%): ${formatCurrency(invoice.subtotal * invoice.tax / 100)}`
       : '',
     invoice.discount > 0
-      ? `🏷️ Diskon: -${formatCurrency(invoice.discount)}`
+      ? `Diskon: -${formatCurrency(invoice.discount)}`
       : '',
     ``,
-    `✅ *TOTAL: ${formatCurrency(invoice.total)}*`,
+    `*TOTAL: ${formatCurrency(invoice.total)}*`,
     ``,
-    invoice.notes ? `📝 Catatan: ${invoice.notes}\n` : '',
+    invoice.notes ? `Catatan: ${invoice.notes}\n` : '',
     `Status: *${(invoice.status || 'draft').toUpperCase()}*`,
     ``,
     `_Terima kasih atas kepercayaan Anda! 🙏_`,
@@ -59,7 +59,7 @@ export const shareInvoice = async (invoice, businessInfo, isPremium) => {
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
             title: `Invoice ${invoice.invoice_number}`,
-            text,
+            text : `Terimakasih sudah order di ${businessInfo.business_name} dan berikut kami kirimkan invoice (${invoice.invoice_number}). Mohon di cek kembali detail pesanannya.`,
             files: [file],
           });
           return { success: true, method: 'native-pdf' };

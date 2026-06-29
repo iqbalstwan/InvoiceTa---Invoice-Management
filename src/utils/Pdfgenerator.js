@@ -36,7 +36,7 @@ const buildInvoiceHTML = (invoice, businessInfo, isPremium) => {
   const logoHTML = logoBase64
     ? `<img src="${logoBase64}" style="
         width: 88px; height: 88px; border-radius: 50%;
-        object-fit: cover; border: 3px solid ${lightBg};
+        object-fit: cover; 
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
       " />`
     : ``;

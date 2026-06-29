@@ -56,7 +56,6 @@ export default function Login() {
       alignItems: 'center',
       justifyContent: 'center',
       padding: 16,
-      marginBottom: -50,
       fontFamily: "'Manrope', sans-serif",
     }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
@@ -67,12 +66,11 @@ export default function Login() {
             src={DEFAULT_LOGO_BASE64}
             alt="InvoiceTa Logo"
             style={{
-              width: 200,
-              height: 200,
+              width: 280,
+              height: 280,
               objectFit: 'contain',
-              marginBottom: -50,
               display: 'block',
-              margin: '0 auto',
+              margin: '0 auto -120px auto',
               filter: 'drop-shadow(0 4px 12px rgba(88,52,29,0.08))',
             }}
           />

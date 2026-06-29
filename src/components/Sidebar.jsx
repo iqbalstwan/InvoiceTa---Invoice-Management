@@ -103,12 +103,9 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
               src={DEFAULT_LOGO_BASE64}
               alt="InvoiceTa Logo"
               style={{
-                width: 60,
-                height: 60,
-                objectFit: 'contain',
-                marginBottom: 8,
-                filter: 'brightness(0) invert(1)',
-                opacity: 0.92,
+                width: 180,
+    height: 'auto',
+    display: 'block',
               }}
             />
           )}
