@@ -209,6 +209,7 @@ export default function History({ subscription }) {
                     <th style={{ textAlign: 'right' }}>Total</th>
                     <th style={{ textAlign: 'center' }}>Status</th>
                     <th>Tanggal</th>
+                    <th>Jatuh Tempo</th>
                     <th style={{ textAlign: 'center' }}>Aksi</th>
                   </tr>
                 </thead>
@@ -233,6 +234,9 @@ export default function History({ subscription }) {
                       </td>
                       <td style={{ color: 'var(--on-surface-variant)', fontSize: 13 }}>
                         {formatDate(inv.created_at)}
+                      </td>
+                      <td style={{ color: 'var(--on-surface-variant)', fontSize: 13 }}>
+                        {formatDate(inv.due_date)}
                       </td>
                       <td>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
@@ -289,9 +293,13 @@ export default function History({ subscription }) {
                     <span className="card-field-value">{formatDate(inv.created_at)}</span>
                   </div>
                   <div className="card-field">
+                    <span className="card-field-label">Jatuh Tempo</span>
+                    <span className="card-field-value">{formatDate(inv.due_date)}</span>
+                  </div>
+                  {/*<div className="card-field">
                     <span className="card-field-label">Metode</span>
                     <span className="card-field-value">{inv.payment_method || '-'}</span>
-                  </div>
+            </div> */}
                 </div>
                 <div className="history-card-footer">
                   <button onClick={() => handleDownloadPDF(inv)}>

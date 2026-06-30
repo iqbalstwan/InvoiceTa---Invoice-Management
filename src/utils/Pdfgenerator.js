@@ -91,6 +91,7 @@ const buildInvoiceHTML = (invoice, businessInfo, isPremium) => {
             <p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:${themeColor};margin:0 0 8px;opacity:0.7;">Tanggal</p>
             <p style="margin:0;font-size:14px;color:#1a1a1a;font-weight:600;">${formatDate(invoice.created_at)}</p>
           </div>
+          
         </div>
 
         <!-- ═══ Thin Separator Line ═══ -->

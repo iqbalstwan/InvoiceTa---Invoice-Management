@@ -5,7 +5,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { useProduct } from '../hooks/useProduct';
 import { supabaseClient } from '../utils/supabaseClient';
 import { formatCurrency, calculateTotal } from '../utils/formatters';
-import { Plus, Trash2, Download, AlertTriangle, Search, Package, Check, X, ShoppingBag, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Download, AlertTriangle, Search, Package, Check, X, ShoppingBag, Sparkles, Calendar } from 'lucide-react';
 import { showToast } from '../utils/toast';
 
 /* ══════════════════════════════════════
@@ -190,6 +190,7 @@ const [form, setForm] = useState({
   customer_name: '',
   customer_email: '',
   customer_phone: '',
+  due_date: '',
   items: [{ id: 1, description: '', quantity: 1, price: 0 }],
   tax: 0,
   discount: 0,
@@ -302,6 +303,7 @@ const handleCreateInvoice = async () => {
     return;
   }
 
+
   if (form.items.some(item => !item.description)) {
     showToast('Semua item harus memiliki deskripsi', 'error');
     return;
@@ -314,6 +316,7 @@ const handleCreateInvoice = async () => {
         customer_name: form.customer_name,
         customer_email: form.customer_email,
         customer_phone: form.customer_phone,
+        due_date: form.due_date || null,
         items: form.items,
         subtotal: totals.subtotal,
         tax: form.tax,
@@ -339,6 +342,7 @@ const handleCreateInvoice = async () => {
       customer_name: '',
       customer_email: '',
       customer_phone: '',
+      due_date: '',
       items: [{ id: 1, description: '', quantity: 1, price: 0 }],
       tax: 0,
       discount: 0,
@@ -432,29 +436,46 @@ return (
             className="form-input"
           />
         </div>
+
+        {/* Due Date */}
+        <div>
+          <label className="form-label">Jatuh Tempo (Opsional)</label>
+          <div style={{ position: 'relative' }}>
+            <Calendar
+              size={16}
+              style={{
+                position: 'absolute', left: 12, top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--outline)', pointerEvents: 'none',
+              }}
+            />
+            <input
+              type="date"
+              value={form.due_date}
+              onChange={(e) => setForm({ ...form, due_date: e.target.value })}
+              className="form-input"
+              style={{ paddingLeft: 36 }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* ── Items Section ── */}
       <div style={{ marginBottom: 28, marginTop: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: 'var(--gradient-warm)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Package size={16} style={{ color: '#ffeadf' }} />
-            </div>
+            
             <h3 style={{ fontFamily: "'Source Serif 4', serif", fontSize: 17, fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
               Detail Barang/Jasa
             </h3>
           </div>
           <button
             onClick={addItem}
-            className="btn btn-secondary btn-sm"
+            className="btn btn-primary"
           >
-            <Plus size={14} />
-            Tambah Item
+            <Plus size={14}
+             />
+            
           </button>
         </div>
 

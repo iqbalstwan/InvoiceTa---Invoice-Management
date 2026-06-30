@@ -134,7 +134,6 @@ export default function Products({ subscription }) {
           className="btn btn-primary"
         >
           <Plus size={16} />
-          Tambah Produk
         </button>
       </div>
 
