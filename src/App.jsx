@@ -41,14 +41,12 @@ function AppContent() {
         }
       );
 
-      // Fetch user branding
       const { data: userData } = await supabaseClient
         .from('users')
         .select('brand_color, logo_base64')
         .eq('id', user.id)
         .single();
 
-      // Store logo in localStorage for components that read it (Sidebar, History)
       if (userData?.logo_base64) {
         localStorage.setItem('company_logo_base64', userData.logo_base64);
       } else {
@@ -60,23 +58,19 @@ function AppContent() {
         const palette = generatePalette(userData.brand_color);
         const root = document.documentElement.style;
         
-        // Primary colors
         root.setProperty('--primary', palette.primary);
         root.setProperty('--primary-hover', palette.primaryHover);
         root.setProperty('--primary-container', palette.primaryContainer);
         root.setProperty('--on-primary-container', palette.onPrimaryContainer);
         
-        // Secondary colors
         root.setProperty('--secondary', palette.secondary);
         root.setProperty('--secondary-container', palette.secondaryContainer);
         
-        // Solid color tokens (replacing gradient vars)
         root.setProperty('--gradient-warm', palette.primary);
         root.setProperty('--gradient-sidebar', palette.primary);
         root.setProperty('--gradient-warm-soft', palette.surfaceContainer);
         root.setProperty('--gradient-card', palette.surface);
         
-        // Surface / Background
         root.setProperty('--surface', palette.surface);
         root.setProperty('--surface-dim', palette.surfaceDim);
         root.setProperty('--surface-container', palette.surfaceContainer);
@@ -84,11 +78,9 @@ function AppContent() {
         root.setProperty('--surface-container-highest', palette.surfaceContainerHighest);
         root.setProperty('--background', palette.background);
         
-        // Text colors
         root.setProperty('--on-surface', palette.onSurface);
         root.setProperty('--on-surface-variant', palette.onSurfaceVariant);
         
-        // Borders and outlines
         root.setProperty('--outline', palette.outline);
         root.setProperty('--outline-variant', palette.outlineVariant);
       }

@@ -144,9 +144,7 @@ export default function History({ subscription }) {
       <h1 className="page-title">Riwayat Invoice</h1>
       <p className="page-sub">Kelola dan lihat semua invoice Anda</p>
 
-      {/* Search & Filter */}
       <div className="card animate-fade-in-up" style={{ padding: '20px 24px', marginBottom: 20 }}>
-        {/* Search */}
         <div style={{ position: 'relative', marginBottom: 14 }}>
           <Search
             size={15}
@@ -166,7 +164,6 @@ export default function History({ subscription }) {
           />
         </div>
 
-        {/* Filter pills */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {['all', 'draft', 'sent', 'paid', 'cancel'].map((s) => (
             <button
@@ -198,7 +195,6 @@ export default function History({ subscription }) {
         </div>
       ) : (
         <>
-          {/* ── Desktop Table ── */}
           <div id="history-table-wrap" className="card animate-fade-in-up" style={{ padding: 0, overflow: 'hidden', animationDelay: '0.05s' }}>
             <div className="table-wrap">
               <table>
@@ -263,7 +259,6 @@ export default function History({ subscription }) {
             </div>
           </div>
 
-          {/* ── Mobile Cards ── */}
           <div id="history-cards" className="history-cards-mobile" style={{ display: 'none' }}>
             {filteredInvoices.map((inv) => (
               <div key={inv.id} className="history-card animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
@@ -317,7 +312,6 @@ export default function History({ subscription }) {
         </>
       )}
 
-      {/* ── Status Modal ── */}
       {showStatusModal && selectedInvoice && (
         <div
           className="modal active"
@@ -366,7 +360,6 @@ export default function History({ subscription }) {
         </div>
       )}
 
-      {/* ── Share Modal ── */}
       {showShareModal && selectedInvoice && (
         <div
           className="modal active"
@@ -384,7 +377,6 @@ export default function History({ subscription }) {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* Native share / PDF */}
               {navigator.canShare && (
                 <button
                   onClick={() => handleShareNative(selectedInvoice)}
@@ -396,7 +388,6 @@ export default function History({ subscription }) {
                 </button>
               )}
 
-              {/* WhatsApp */}
               <button
                 onClick={() => handleShareWhatsApp(selectedInvoice)}
                 className="btn"
@@ -406,7 +397,6 @@ export default function History({ subscription }) {
                 WhatsApp
               </button>
 
-              {/* Copy text */}
               <button
                 onClick={() => handleCopyText(selectedInvoice)}
                 className="btn"
@@ -428,7 +418,6 @@ export default function History({ subscription }) {
         </div>
       )}
 
-      {/* ── Toast ── */}
       {toast && (
         <div style={{
           position: 'fixed', bottom: 80, right: 24,
@@ -457,7 +446,6 @@ export default function History({ subscription }) {
   );
 }
 
-/* ── style helpers ── */
 const actionBtn = (bg, color) => ({
   background: bg,
   color,

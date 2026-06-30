@@ -24,7 +24,6 @@ export default function Topbar({ user, subscription, currentPage }) {
 
   return (
     <div className="topbar">
-      {/* Left: page title */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2
           style={{
@@ -40,7 +39,6 @@ export default function Topbar({ user, subscription, currentPage }) {
         </h2>
       </div>
 
-      {/* Right: subscription badge + user email */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         {/* Tombol notifikasi sementara dinonaktifkan
         <button style={{

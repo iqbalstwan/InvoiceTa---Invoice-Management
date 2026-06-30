@@ -1,9 +1,7 @@
 import { generateInvoicePDFBlob } from './Pdfgenerator';
 import { formatCurrency, formatDate } from './formatters';
 
-/* ─────────────────────────────────────────────
-   Build WhatsApp / text summary of invoice
-───────────────────────────────────────────── */
+
 const buildInvoiceText = (invoice, businessInfo) => {
   const biz   = businessInfo.business_name || 'InvoiceTa';
   const items = Array.isArray(invoice.items) ? invoice.items : [];
@@ -21,11 +19,11 @@ const buildInvoiceText = (invoice, businessInfo) => {
     invoice.customer_phone ? `${invoice.customer_phone}` : '',
     invoice.customer_email ? `${invoice.customer_email}` : '',
     ``,
-    `🛒 *Detail Item:*`,
+    `*Detail Item:*`,
     ...lines,
     ``,
     invoice.tax > 0
-      ? `Subtotal: ${formatCurrency(invoice.subtotal)}\n💰 Pajak (${invoice.tax}%): ${formatCurrency(invoice.subtotal * invoice.tax / 100)}`
+      ? `Subtotal: ${formatCurrency(invoice.subtotal)}\n Pajak (${invoice.tax}%): ${formatCurrency(invoice.subtotal * invoice.tax / 100)}`
       : '',
     invoice.discount > 0
       ? `Diskon: -${formatCurrency(invoice.discount)}`
@@ -42,15 +40,11 @@ const buildInvoiceText = (invoice, businessInfo) => {
     .join('\n');
 };
 
-/* ─────────────────────────────────────────────
-   SHARE via Web Share API (with PDF)
-   Falls back to WhatsApp text or download
-───────────────────────────────────────────── */
+
 export const shareInvoice = async (invoice, businessInfo, isPremium) => {
   const text = buildInvoiceText(invoice, businessInfo);
   const filename = `${invoice.invoice_number}.pdf`;
 
-  // 1. Try native share with PDF blob
   if (navigator.canShare) {
     try {
       const blob = await generateInvoicePDFBlob(invoice, businessInfo, isPremium);
@@ -73,7 +67,6 @@ export const shareInvoice = async (invoice, businessInfo, isPremium) => {
       }
     }
 
-    // 2. Try native share text-only
     try {
       await navigator.share({
         title: `Invoice ${invoice.invoice_number}`,
@@ -86,13 +79,10 @@ export const shareInvoice = async (invoice, businessInfo, isPremium) => {
     }
   }
 
-  // 3. Fallback: open WhatsApp with message
   return shareViaWhatsApp(invoice, businessInfo);
 };
 
-/* ─────────────────────────────────────────────
-   SHARE via WhatsApp (phone number optional)
-───────────────────────────────────────────── */
+
 export const shareViaWhatsApp = (invoice, businessInfo) => {
   const text   = buildInvoiceText(invoice, businessInfo);
   const phone  = invoice.customer_phone?.replace(/\D/g, '') || '';
@@ -105,16 +95,14 @@ export const shareViaWhatsApp = (invoice, businessInfo) => {
   return { success: true, method: 'whatsapp' };
 };
 
-/* ─────────────────────────────────────────────
-   COPY invoice summary to clipboard
-───────────────────────────────────────────── */
+
 export const copyInvoiceToClipboard = async (invoice, businessInfo) => {
   const text = buildInvoiceText(invoice, businessInfo);
   try {
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
-    // Fallback for older browsers
+
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.style.position = 'fixed';
@@ -127,8 +115,6 @@ export const copyInvoiceToClipboard = async (invoice, businessInfo) => {
   }
 };
 
-/* ─────────────────────────────────────────────
-   Re-export PDF download for convenience
-───────────────────────────────────────────── */
+
 export { generateInvoicePDFBlob } from './Pdfgenerator';
 export { generateInvoicePDF }     from './Pdfgenerator';

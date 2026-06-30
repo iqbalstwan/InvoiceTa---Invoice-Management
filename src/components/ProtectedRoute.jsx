@@ -18,6 +18,5 @@ export default function ProtectedRoute({
     return fallback || <div>Silakan login terlebih dahulu</div>;
   }
 
-  // Jika ada requirement plan specific, check nanti di component
   return children;
 }

@@ -8,9 +8,7 @@ import { formatCurrency, calculateTotal } from '../utils/formatters';
 import { Plus, Trash2, Download, AlertTriangle, Search, Package, Check, X, ShoppingBag, Sparkles, Calendar } from 'lucide-react';
 import { showToast } from '../utils/toast';
 
-/* ══════════════════════════════════════
-  PRODUCT PICKER MODAL COMPONENT
-  ══════════════════════════════════════ */
+
 function ProductPickerModal({ products, onSelect, onClose, currentDescription }) {
 const [search, setSearch] = useState('');
 const searchRef = useRef(null);
@@ -71,7 +69,7 @@ return (
           </button>
         </div>
 
-        {/* Search */}
+        
         <div style={{ position: 'relative' }}>
           <Search size={16} style={{
             position: 'absolute', left: 14, top: '50%',
@@ -88,7 +86,7 @@ return (
         </div>
       </div>
 
-      {/* Body */}
+      
       <div className="product-picker-body">
         {filtered.length > 0 ? (
           <div className="product-picker-grid">
@@ -152,7 +150,7 @@ return (
         )}
       </div>
 
-      {/* Footer */}
+    
       <div className="product-picker-footer">
         <span style={{ fontSize: 12, color: 'var(--outline)' }}>
           {filtered.length} dari {products.length} produk
@@ -166,9 +164,7 @@ return (
 );
 }
 
-/* ══════════════════════════════════════
-  MAIN CREATE INVOICE COMPONENT
-  ══════════════════════════════════════ */
+
 export default function CreateInvoiceEnhanced({ subscription, setCurrentPage }) {
 const { user } = useAuth();
 const { createInvoice } = useInvoice();
@@ -207,7 +203,7 @@ useEffect(() => {
 
 const loadSettingsAndProducts = async () => {
   try {
-    // Load user settings
+    
     const { data: userData } = await supabaseClient
       .from('users')
       .select('business_name, city, contact, next_invoice_number,notes')
@@ -218,7 +214,7 @@ const loadSettingsAndProducts = async () => {
       setSettings(userData);
       setNextInvoiceNumber(userData.next_invoice_number || 1);
       
-      // Generate invoice number format: INV-001, INV-002, etc
+      
       const year = new Date().getFullYear();
       const nextNumber = String(userData.next_invoice_number ?? 1).padStart(6, '0');
 
@@ -231,7 +227,7 @@ const loadSettingsAndProducts = async () => {
 }      ));
     }
 
-    // Load products
+    
     const productsData = await getProducts(user.id);
     setProducts(productsData);
   } catch (error) {
@@ -327,7 +323,7 @@ const handleCreateInvoice = async () => {
       user.id
     );
 
-    // Update next invoice number
+   
     await supabaseClient
       .from('users')
       .update({ next_invoice_number: nextInvoiceNumber + 1 })
@@ -335,7 +331,7 @@ const handleCreateInvoice = async () => {
 
     showToast('Invoice berhasil dibuat!', 'success');
     
-    // Reset form
+   
     const newInvoiceNum = 'INV-' + String(nextInvoiceNumber + 1).padStart(4, '0');
     setForm({
       invoice_number: newInvoiceNum,
@@ -386,9 +382,9 @@ return (
     <p className="page-sub">Isi detail invoice dan pilih produk/jasa yang dijual</p>
 
     <div className="card animate-fade-in-up">
-      {/* Customer Info - Responsive Grid */}
+      
       <div className="form-grid">
-        {/* Invoice Number */}
+       
         <div>
           <label className="form-label">No. Invoice</label>
           <input
@@ -401,7 +397,7 @@ return (
           <p style={{ fontSize: 11, color: 'var(--outline)', marginTop: 4, fontStyle: 'italic' }}>Auto-generated</p>
         </div>
 
-        {/* Customer Name */}
+       
         <div>
           <label className="form-label">Nama Pelanggan *</label>
           <input
@@ -413,7 +409,7 @@ return (
           />
         </div>
 
-        {/* Customer Email */}
+       
         <div>
           <label className="form-label">Email Pelanggan</label>
           <input
@@ -425,7 +421,7 @@ return (
           />
         </div>
 
-        {/* Customer Phone */}
+       
         <div>
           <label className="form-label">No. WhatsApp / Telepon</label>
           <input
@@ -437,7 +433,7 @@ return (
           />
         </div>
 
-        {/* Due Date */}
+     
         <div>
           <label className="form-label">Jatuh Tempo (Opsional)</label>
           <div style={{ position: 'relative' }}>
@@ -460,7 +456,7 @@ return (
         </div>
       </div>
 
-      {/* ── Items Section ── */}
+    
       <div style={{ marginBottom: 28, marginTop: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -479,7 +475,7 @@ return (
           </button>
         </div>
 
-        {/* Items List */}
+      
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {form.items.map((item, idx) => (
             <div
@@ -494,13 +490,13 @@ return (
                 animationDelay: `${idx * 0.05}s`,
               }}
             >
-              {/* Product Selection */}
+            
               <div style={{ marginBottom: 14 }}>
                 <label className="form-label" style={{ fontSize: 10, marginBottom: 6 }}>
                   Produk/Jasa *
                 </label>
                 {item.description ? (
-                  // Selected product chip
+                  
                   <div
                     className="product-chip"
                     onClick={() => setPickerForItem(item.id)}
@@ -518,7 +514,7 @@ return (
                     <span className="product-chip-price">{formatCurrency(item.price)}</span>
                   </div>
                 ) : (
-                  // Empty state - select button
+                  
                   <button
                     className="product-select-btn"
                     onClick={() => setPickerForItem(item.id)}
@@ -544,7 +540,7 @@ return (
                 )}
               </div>
 
-              {/* Qty, Price, Total Row */}
+             
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 12, alignItems: 'end' }}>
                 <div>
                   <label className="form-label" style={{ fontSize: 10, marginBottom: 4 }}>Qty</label>
@@ -592,7 +588,7 @@ return (
         </div>
       </div>
 
-      {/* Tax & Discount */}
+     
       <div className="form-grid" style={{ maxWidth: '100%', alignItems: 'start' }}>
         <div>
           <label className="form-label">PPN (%)</label>
@@ -625,7 +621,7 @@ return (
         />
       </div>
 
-      {/* Totals */}
+   
       <div
         style={{
           background: 'var(--gradient-warm-soft)',
@@ -671,7 +667,7 @@ return (
         </div>
       </div>
 
-      {/* Buttons */}
+     
       <button
         onClick={handleCreateInvoice}
         className="btn btn-primary"
@@ -682,7 +678,7 @@ return (
       </button>
     </div>
 
-    {/* ── Product Picker Modal ── */}
+   
     {pickerForItem !== null && (
       <ProductPickerModal
         products={products}

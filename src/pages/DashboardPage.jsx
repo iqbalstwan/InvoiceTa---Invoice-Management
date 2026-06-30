@@ -96,7 +96,6 @@ export default function Dashboard({ subscription, setCurrentPage }) {
     );
   };
 
-  /* ─── Loading ─── */
   if (loading) return (
     <div className="page-loading">
       <div className="loading-spinner" />
@@ -104,7 +103,6 @@ export default function Dashboard({ subscription, setCurrentPage }) {
     </div>
   );
 
-  /* ─── Error ─── */
   if (error) return (
     <div className="card" style={{ borderLeft: '4px solid var(--error)' }}>
       <p style={{ fontWeight: 700, color: 'var(--error)', marginBottom: 6 }}>❌ Gagal memuat dashboard</p>
@@ -114,7 +112,6 @@ export default function Dashboard({ subscription, setCurrentPage }) {
 
   const maxVal = Math.max(...chartData.map(d => d.total), 1);
 
-  /* ─── Free / Locked ─── */
   if (!isPremium) {
     return (
       <div>
@@ -138,13 +135,11 @@ export default function Dashboard({ subscription, setCurrentPage }) {
     );
   }
 
-  /* ─── Premium Dashboard ─── */
   return (
     <div>
       <h1 className="page-title">Dashboard</h1>
       <p className="page-sub">Ringkasan invoice dan pendapatan Anda</p>
 
-      {/* ── Stats Row 1 ── */}
       <div className="stats-grid">
         <StatCard  label="Total Pendapatan" value={formatCurrency(stats.totalRevenue)} accent="var(--primary)" />
         <StatCard    label="Total Invoice"    value={stats.totalInvoices}                              accent="var(--primary)" />
@@ -152,7 +147,6 @@ export default function Dashboard({ subscription, setCurrentPage }) {
         <StatCard      label="Belum Lunas"     value={stats.unpaidInvoices}                             accent="var(--error, #c62828)" />
       </div>
 
-      {/* ── Stats Row 2 (Pro) ── */}
       <div className="stats-grid" style={{ marginTop: 16, marginBottom: 8 }}>
         <StatCard
           
@@ -180,7 +174,6 @@ export default function Dashboard({ subscription, setCurrentPage }) {
         </div>
       ) : (
         <>
-          {/* ── Chart ── */}
           <div className="card" style={{ marginBottom: 20 }}>
             <div className="chart-header">
               <h3 className="chart-title">Tren Pendapatan</h3>
@@ -233,7 +226,6 @@ export default function Dashboard({ subscription, setCurrentPage }) {
                   </svg>
                 </div>
 
-                {/* Legend */}
                 <div className="chart-legend">
                   {chartData.map((item, idx) => (
                     <div key={idx} className="chart-legend-item">
@@ -249,7 +241,6 @@ export default function Dashboard({ subscription, setCurrentPage }) {
             )}
           </div>
 
-          {/* ── Recent Invoices ── */}
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div className="recent-header">
               <h3 style={{ fontFamily: "'Source Serif 4', serif", fontSize: 'clamp(15px,3vw,18px)', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
@@ -257,7 +248,6 @@ export default function Dashboard({ subscription, setCurrentPage }) {
               </h3>
             </div>
 
-            {/* Desktop table */}
             <div className="recent-table-wrap">
               <table className="recent-table">
                 <thead>
@@ -285,7 +275,6 @@ export default function Dashboard({ subscription, setCurrentPage }) {
               </table>
             </div>
 
-            {/* Mobile cards */}
             <div className="recent-cards">
               {recentInvoices.map(inv => (
                 <div key={inv.id} className="recent-card">
@@ -316,7 +305,6 @@ export default function Dashboard({ subscription, setCurrentPage }) {
   );
 }
 
-/* ─────────── StatCard ─────────── */
 function StatCard({ icon, label, value, accent, locked }) {
   if (locked) {
     return (

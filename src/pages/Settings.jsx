@@ -55,7 +55,6 @@ export default function Settings({ user, subscription }) {
       }
       window.dispatchEvent(new Event('logoUpdated'));
       
-      // Apply palette live so the UI updates instantly
       if (settings.brand_color) {
         const palette = generatePalette(settings.brand_color);
         const root = document.documentElement.style;
@@ -163,7 +162,6 @@ export default function Settings({ user, subscription }) {
 
       <div style={{ maxWidth: 680 }}>
 
-        {/* ── Akun ── */}
         <div className="card animate-fade-in-up">
           <h3 style={cardHeading}>
             <div style={iconBadge}>
@@ -186,7 +184,6 @@ export default function Settings({ user, subscription }) {
           </div>
         </div>
 
-        {/* ── Profil Bisnis ── */}
         <div className="card animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
           <h3 style={cardHeading}>
             <div style={iconBadge}>
@@ -235,7 +232,6 @@ export default function Settings({ user, subscription }) {
             
 
 
-            {/* ── Company Logo Upload — Drag & Drop ── */}
             <div style={{ marginTop: 8 }}>
               <label className="form-label">
                 <ImageIcon size={11} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
@@ -325,7 +321,6 @@ export default function Settings({ user, subscription }) {
               />
             </div>
             
-            {/* ── Custom Branding Colors ── */}
             <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid var(--outline-variant)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <label className="form-label" style={{ marginBottom: 0 }}>
@@ -367,7 +362,6 @@ export default function Settings({ user, subscription }) {
                       title={color.label}
                     />
                   ))}
-                  {/* Custom Hex Input */}
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 8,
                     border: '1.5px solid var(--outline-variant)', borderRadius: 12,
@@ -394,7 +388,6 @@ export default function Settings({ user, subscription }) {
 
         </div>
 
-        {/* ── Format PDF ── */}
         <div className="card animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <h3 style={cardHeading}>
             <div style={iconBadge}>
@@ -441,7 +434,6 @@ export default function Settings({ user, subscription }) {
           </div>
         </div>
 
-        {/* ── Simpan Button & Message ── */}
         <div className="animate-fade-in-up" style={{ animationDelay: '0.12s', marginBottom: 20 }}>
           {message.text && (
             <div style={{

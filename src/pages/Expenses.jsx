@@ -15,10 +15,10 @@ export default function Expenses({ subscription }) {
   const [form, setForm] = useState({
     name: '',
     amount: 0,
-    expense_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+    expense_date: new Date().toISOString().split('T')[0],
   });
 
-  const isPro = subscription?.subscription_plans?.name && subscription.subscription_plans.name !== 'Free'; // Allow all premium (Starter, Professional)
+  const isPro = subscription?.subscription_plans?.name && subscription.subscription_plans.name !== 'Free';
 
   useEffect(() => {
     if (user && isPro) loadExpenses();
@@ -144,7 +144,6 @@ export default function Expenses({ subscription }) {
         </button>
       </div>
 
-      {/* Form Modal */}
       {showForm && (
         <div className="modal active" style={{ zIndex: 1000 }}>
           <div className="modal-content" style={{ maxWidth: 480 }}>
@@ -158,7 +157,6 @@ export default function Expenses({ subscription }) {
             </div>
 
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Name */}
               <div>
                 <label className="form-label">Nama Barang / Keperluan *</label>
                 <input
@@ -171,7 +169,6 @@ export default function Expenses({ subscription }) {
                 />
               </div>
 
-              {/* Amount */}
               <div>
                 <label className="form-label">Nominal (Rp) *</label>
                 <input
@@ -184,7 +181,6 @@ export default function Expenses({ subscription }) {
                 />
               </div>
 
-              {/* Date */}
               <div>
                 <label className="form-label">Tanggal Pembelian *</label>
                 <input
@@ -196,7 +192,6 @@ export default function Expenses({ subscription }) {
                 />
               </div>
 
-              {/* Buttons */}
               <div className="modal-actions" style={{ marginTop: 8 }}>
                 <button
                   type="button"
@@ -219,7 +214,6 @@ export default function Expenses({ subscription }) {
         </div>
       )}
 
-      {/* Expenses List */}
       <div className="card">
         {expenses.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 20px' }}>

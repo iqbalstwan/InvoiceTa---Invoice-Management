@@ -2,7 +2,6 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-/* ── Design Tokens (Enhanced Earth-Tone) ── */
 :root {
   --primary: #58341d;
   --primary-hover: #6d4228;
@@ -30,7 +29,6 @@
   --info-bg: #ebf5fb;
   --sidebar-w: 240px;
 
-  /* Flat / Solid tokens replacing glow and gradients */
   --glow-primary: transparent;
   --glow-primary-strong: transparent;
   --glow-accent: transparent;
@@ -44,7 +42,6 @@
   --box-shadow-glow: none;
 }
 
-/* ── Reset ── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -68,7 +65,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 10px; }
@@ -234,7 +230,7 @@ nav { padding: 20px 14px; flex: 1; }
 }
 
 /* ══════════════════════════════════════
-   BUTTONS — With Gradients & Glow
+   BUTTONS
    ══════════════════════════════════════ */
 .btn {
   padding: 10px 22px;
@@ -285,7 +281,7 @@ nav { padding: 20px 14px; flex: 1; }
 .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 8px; }
 
 /* ══════════════════════════════════════
-   CARDS — Elevated with subtle glow
+   CARDS
    ══════════════════════════════════════ */
 .card {
   background: var(--gradient-card);
@@ -302,7 +298,7 @@ nav { padding: 20px 14px; flex: 1; }
 }
 
 /* ══════════════════════════════════════
-   FORMS — With focus glow
+   FORMS
    ══════════════════════════════════════ */
 .form-grid {
   display: grid;
@@ -385,7 +381,7 @@ tr { transition: background 0.15s ease; }
 tr:hover td { background: var(--surface-container); }
 
 /* ══════════════════════════════════════
-   BADGES — With soft glow
+   BADGES 
    ══════════════════════════════════════ */
 .badge {
   display: inline-flex;
@@ -471,7 +467,7 @@ tr:hover td { background: var(--surface-container); }
 }
 
 /* ══════════════════════════════════════
-   MODALS — Glassmorphism Overlay
+   MODALS 
    ══════════════════════════════════════ */
 .modal {
   display: none;
@@ -664,7 +660,6 @@ tr:hover td { background: var(--surface-container); }
   background: var(--surface-container);
 }
 
-/* Selected product chip in invoice item */
 .product-chip {
   display: inline-flex;
   align-items: center;
@@ -691,7 +686,6 @@ tr:hover td { background: var(--surface-container); }
   margin-left: auto;
 }
 
-/* Empty product button */
 .product-select-btn {
   display: flex;
   align-items: center;
@@ -729,7 +723,7 @@ tr:hover td { background: var(--surface-container); }
 }
 
 /* ══════════════════════════════════════
-   TOAST — Floating notification
+   TOAST
    ══════════════════════════════════════ */
 #toast {
   position: fixed;
@@ -909,14 +903,14 @@ tr:hover td { background: var(--surface-container); }
 .animate-slide-in { animation: slideInRight 0.35s ease both; }
 
 /* ══════════════════════════════════════
-   MOBILE: DRAWER OVERLAY
+   MOBILE
    ══════════════════════════════════════ */
 .drawer-overlay {
   display: none;
 }
 
 /* ══════════════════════════════════════
-   MOBILE: SLIDE-IN DRAWER
+   MOBILE
    ══════════════════════════════════════ */
 .sidebar-drawer {
   display: none;
@@ -1112,7 +1106,6 @@ tr:hover td { background: var(--surface-container); }
     transform: translateX(0);
   }
 
-  /* Show bottom tab bar */
   .bottom-tab-bar {
     display: flex;
     position: fixed;
@@ -1188,10 +1181,9 @@ tr:hover td { background: var(--surface-container); }
     line-height: 1;
   }
 
-  /* Main area adjustments */
   .main {
     margin-left: 0;
-    padding-bottom: 80px; /* space for bottom tab bar */
+    padding-bottom: 80px; 
   }
   .topbar { padding: 0 16px; height: 52px; }
   .page { padding: 16px 16px 24px; }
@@ -1288,7 +1280,6 @@ tr:hover td { background: var(--surface-container); }
     .stats-grid { grid-template-columns: 1fr; gap: 10px; }
   }
   
-  /* ── Stat Card ── */
   .stat-card {
     background: var(--surface);
     border: 1px solid var(--outline-variant);
@@ -1528,7 +1519,7 @@ tr:hover td { background: var(--surface-container); }
 
 
   /* ═══════════════════════════════════════════
-   LOGIN PAGE — 2-Column Professional Layout
+   LOGIN PAGE
    ═══════════════════════════════════════════ */
 
 .login-page {

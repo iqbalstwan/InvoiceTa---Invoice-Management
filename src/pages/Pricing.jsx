@@ -32,7 +32,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
   };
 
   const handleSubscribe = async (planId) => {
-    // Tampilkan modal kontak untuk upgrade
     setShowContactModal(true);
   };
 
@@ -42,8 +41,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
     <div>
       <h1 className="page-title">Pilih Paket</h1>
       <p className="page-sub">Upgrade untuk mendapatkan lebih banyak fitur dan invoice tak terbatas</p>
-
-      {/* Plan Cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -74,7 +71,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
                 transition: 'all .2s',
               }}
             >
-              {/* Active ribbon */}
               {isActive && (
                 <div style={{
                   background: accent.badge,
@@ -91,7 +87,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
               )}
 
               <div style={{ padding: 24 }}>
-                {/* Icon + Name */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <div style={{
                     background: accent.badge,
@@ -119,7 +114,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
                   </h3>
                 </div>
 
-                {/* Price */}
                 <div style={{ marginBottom: 16 }}>
                   {isFree ? (
                     <p style={{ fontSize: 28, fontWeight: 700, color: '#2e7d32', fontFamily: "'Source Serif 4', serif" }}>
@@ -142,7 +136,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
                   )}
                 </div>
 
-                {/* Invoice limit pill */}
                 <div style={{
                   display: 'inline-block',
                   background: accent.badge,
@@ -155,8 +148,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
                 }}>
                   {plan.invoice_limit === -1 ? '∞ Invoice' : `${plan.invoice_limit} Invoice/bulan`}
                 </div>
-
-                {/* Features */}
                 <ul style={{ listStyle: 'none', padding: 0, marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {features.map((f, i) => (
                     <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13 }}>
@@ -166,7 +157,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
                   ))}
                 </ul>
 
-                {/* CTA */}
                 {isActive ? (
                   <button disabled className="btn" style={{
                     width: '100%', justifyContent: 'center',
@@ -203,7 +193,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
         })}
       </div>
 
-      {/* FAQ */}
       <div className="card">
         <h3 style={{
           fontFamily: "'Source Serif 4', serif",
@@ -234,7 +223,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
         </div>
       </div>
 
-      {/* Toast */}
       {toast && (
         <div style={{
           position: 'fixed', bottom: 80, right: 24,
@@ -247,7 +235,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
         </div>
       )}
 
-      {/* Contact Modal */}
       {showContactModal && (
         <div className="modal active" style={{ zIndex: 1000 }}>
           <div className="modal-content" style={{ maxWidth: 400, textAlign: 'center' }}>

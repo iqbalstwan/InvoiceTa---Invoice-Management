@@ -54,7 +54,6 @@ export default function Products({ subscription }) {
 
     try {
       if (editingId) {
-        // Update
         const { error } = await supabaseClient
           .from('products')
           .update({
@@ -137,7 +136,6 @@ export default function Products({ subscription }) {
         </button>
       </div>
 
-      {/* Form Modal */}
       {showForm && (
         <div className="modal active" style={{ zIndex: 1000 }}>
           <div className="modal-content" style={{ maxWidth: 480 }}>
@@ -151,7 +149,6 @@ export default function Products({ subscription }) {
             </div>
 
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Name */}
               <div>
                 <label className="form-label">Nama Produk *</label>
                 <input
@@ -163,7 +160,6 @@ export default function Products({ subscription }) {
                 />
               </div>
 
-              {/* Description */}
               <div>
                 <label className="form-label">Deskripsi</label>
                 <textarea
@@ -175,7 +171,6 @@ export default function Products({ subscription }) {
                 />
               </div>
 
-              {/* Price */}
               <div>
                 <label className="form-label">Harga (Rp) *</label>
                 <input
@@ -187,7 +182,6 @@ export default function Products({ subscription }) {
                 />
               </div>
 
-              {/* Unit */}
               <div>
                 <label className="form-label">Satuan</label>
                 <select
@@ -208,7 +202,6 @@ export default function Products({ subscription }) {
                 </select>
               </div>
 
-              {/* Category */}
               <div>
                 <label className="form-label">Kategori</label>
                 <select
@@ -226,7 +219,6 @@ export default function Products({ subscription }) {
                 </select>
               </div>
 
-              {/* Buttons */}
               <div className="modal-actions">
                 <button
                   type="button"
@@ -249,7 +241,6 @@ export default function Products({ subscription }) {
         </div>
       )}
 
-      {/* Products List */}
       {loading ? (
         <div className="page-loading">
           <div className="loading-spinner" />
@@ -275,7 +266,6 @@ export default function Products({ subscription }) {
               className="card"
               style={{ padding: 24, margin: 0, display: 'flex', flexDirection: 'column', height: '100%' }}
             >
-              {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <div>
                   <h3 style={{ fontFamily: "'Source Serif 4', serif", fontSize: 16, fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
@@ -301,7 +291,6 @@ export default function Products({ subscription }) {
                 </div>
               </div>
 
-              {/* Description */}
               {product.description && (
                 <p style={{ fontSize: 12.5, color: 'var(--on-surface-variant)', marginBottom: 16, flex: 1, lineClamp: 2 }}>
                   {product.description}
@@ -309,7 +298,6 @@ export default function Products({ subscription }) {
               )}
               {!product.description && <div style={{ flex: 1 }} />}
 
-              {/* Price */}
               <div
                 style={{
                   padding: 14,
@@ -323,8 +311,6 @@ export default function Products({ subscription }) {
                   {formatCurrency(product.price)}
                 </p>
               </div>
-
-              {/* Use in Invoice Badge */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--outline-variant)', fontSize: 11, color: 'var(--success)', fontWeight: 600 }}>
                 <CheckCircle2 size={13} />
                 <span>Siap digunakan di invoice</span>
@@ -334,7 +320,6 @@ export default function Products({ subscription }) {
         </div>
       )}
 
-      {/* Tip */}
       <div
         className="card"
         style={{

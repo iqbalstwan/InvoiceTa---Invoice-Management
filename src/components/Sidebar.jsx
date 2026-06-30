@@ -63,7 +63,6 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
     setDrawerOpen(false);
   };
 
-  // Swipe to close drawer
   const handleTouchStart = useCallback((e) => {
     touchStartX.current = e.touches[0].clientX;
   }, []);
@@ -90,11 +89,7 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
 
   return (
     <>
-      {/* ══════════════════════════════════════
-         DESKTOP SIDEBAR (unchanged layout)
-         ══════════════════════════════════════ */}
       <aside className="sidebar sidebar-desktop">
-        {/* Brand */}
         <div className="brand" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '16px 0', gap: 0 }}>
           {logoBase64 ? (
             <img src={logoBase64} alt="Logo" style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', marginBottom: 12 }} />
@@ -112,7 +107,6 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
           <p className="brand-tagline">INVOICE MANAGEMENT</p>
         </div>
 
-        {/* Navigation */}
         <nav>
           <p className="nav-section-label">Menu Utama</p>
           {menuItems.map(({ id, label, icon: Icon }) => (
@@ -139,7 +133,6 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
           </button>
         </nav>
 
-        {/* Online status */}
         <div className="sidebar-status">
           <div style={{
             background: 'rgba(0,0,0,0.15)', padding: '10px 14px',
@@ -151,9 +144,6 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
         </div>
       </aside>
 
-      {/* ══════════════════════════════════════
-         MOBILE: OVERLAY DRAWER
-         ══════════════════════════════════════ */}
       {drawerOpen && (
         <div
           className="drawer-overlay"
@@ -168,7 +158,6 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Drawer header */}
         <div className="drawer-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {logoBase64 ? (
@@ -200,7 +189,6 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
           </button>
         </div>
 
-        {/* Drawer navigation */}
         <nav className="drawer-nav">
           <p className="drawer-section-label">Menu Utama</p>
           {menuItems.map(({ id, label, icon: Icon }) => (
@@ -244,9 +232,7 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
         </div>
       </aside>
 
-      {/* ══════════════════════════════════════
-         MOBILE: BOTTOM TAB BAR
-         ══════════════════════════════════════ */}
+
       <nav className="bottom-tab-bar">
         {bottomTabItems.map(({ id, label, icon: Icon }) => (
           <button
@@ -262,7 +248,6 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
           </button>
         ))}
 
-        {/* More button to open drawer */}
         <button
           onClick={() => setDrawerOpen(true)}
           className={`bottom-tab-item${['expense', 'pricing', 'settings'].includes(currentPage) ? ' active' : ''}`}

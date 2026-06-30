@@ -59,13 +59,11 @@ export default function Login() {
     <div className="login-page">
       {/* ════════ LEFT PANEL ════════ */}
       <div className="login-brand">
-        {/* Decorative blobs */}
         <div className="login-brand__blob login-brand__blob--1" />
         <div className="login-brand__blob login-brand__blob--2" />
         <div className="login-brand__blob login-brand__blob--3" />
 
         <div className="login-brand__inner">
-          {/* Logo */}
           <div className="login-brand__logo-wrap">
             <img
               src={DEFAULT_LOGO_BASE64}
@@ -83,7 +81,6 @@ export default function Login() {
             Platform pembuatan invoice & pelacakan pendapatan untuk UMKM dan freelancer Indonesia.
           </p>
 
-          {/* Feature pills */}
           <div className="login-brand__features">
             {features.map((f, i) => (
               <div key={i} className="login-brand__feature">
@@ -103,7 +100,6 @@ export default function Login() {
       <div className="login-form-panel">
         <div className="login-form-panel__inner">
 
-          {/* Mobile-only logo (hidden on desktop) */}
           <div className="login-mobile-logo">
             <img
               src={DEFAULT_LOGO_BASE64}
@@ -113,7 +109,6 @@ export default function Login() {
           </div>
 
           <div className="login-form-card card">
-            {/* Header */}
             <div className="login-form-header">
               <h2 className="login-form-title">
                 {isSignUp ? 'Buat Akun Baru' : 'Selamat Datang'}
@@ -125,7 +120,6 @@ export default function Login() {
               </p>
             </div>
 
-            {/* Error */}
             {error && (
               <div className="login-alert login-alert--error">
                 <AlertCircle size={15} />
@@ -133,7 +127,6 @@ export default function Login() {
               </div>
             )}
 
-            {/* Success */}
             {success && (
               <div className="login-alert login-alert--success">
                 <CheckCircle2 size={15} />
@@ -142,7 +135,7 @@ export default function Login() {
             )}
 
             <form onSubmit={handleAuth} className="login-form">
-              {/* Email */}
+              
               <div className="login-field">
                 <label className="form-label">Email</label>
                 <div className="login-input-wrap">
@@ -158,7 +151,7 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Password */}
+             
               <div className="login-field">
                 <label className="form-label">Password</label>
                 <div className="login-input-wrap">
@@ -175,7 +168,7 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Submit */}
+             
               <button
                 type="submit"
                 disabled={loading}
@@ -189,12 +182,12 @@ export default function Login() {
               </button>
             </form>
 
-            {/* Divider */}
+           
             <div className="login-divider">
               <span>atau</span>
             </div>
 
-            {/* Toggle */}
+         
             <button
               type="button"
               onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccess(''); }}
@@ -204,14 +197,14 @@ export default function Login() {
               <strong>{isSignUp ? 'Login di sini' : 'Daftar gratis'}</strong>
             </button>
 
-            {/* Hint */}
+        
             <div className="login-hint">
               <HelpCircle size={12} />
               <span>Gunakan email valid & password min. 6 karakter</span>
             </div>
           </div>
 
-          {/* Bottom text */}
+      
           <p className="login-bottom-text">
             © {new Date().getFullYear()} InvoiceTa By TinkerWorks
           </p>

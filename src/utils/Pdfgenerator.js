@@ -2,11 +2,7 @@ import html2pdf from 'html2pdf.js';
 import { formatCurrency, formatDate } from './formatters';
 import { DEFAULT_LOGO_BASE64 } from './defaultLogo';
 
-/* ─────────────────────────────────────────────
-   PREMIUM INVOICE HTML BUILDER
-   Features: Company logo, gradient accents,
-   modern typography, polished layout
-───────────────────────────────────────────── */
+
 const buildInvoiceHTML = (invoice, businessInfo, isPremium) => {
   const items = Array.isArray(invoice.items) ? invoice.items : [];
   const subtotal  = Number(invoice.subtotal)  || 0;
@@ -41,7 +37,7 @@ const buildInvoiceHTML = (invoice, businessInfo, isPremium) => {
       " />`
     : ``;
 
-  // Row number for items
+
   let rowNum = 0;
 
   return `
@@ -178,9 +174,7 @@ const buildInvoiceHTML = (invoice, businessInfo, isPremium) => {
   `;
 };
 
-/* ─────────────────────────────────────────────
-   SAVE AS PDF
-───────────────────────────────────────────── */
+
 export const generateInvoicePDF = async (invoice, businessInfo, isPremium) => {
   const element = document.createElement('div');
   element.innerHTML = buildInvoiceHTML(invoice, businessInfo, isPremium);
@@ -202,9 +196,7 @@ export const generateInvoicePDF = async (invoice, businessInfo, isPremium) => {
   }
 };
 
-/* ─────────────────────────────────────────────
-   GET PDF BLOB (for sharing)
-───────────────────────────────────────────── */
+
 export const generateInvoicePDFBlob = async (invoice, businessInfo, isPremium) => {
   const element = document.createElement('div');
   element.innerHTML = buildInvoiceHTML(invoice, businessInfo, isPremium);
