@@ -3,8 +3,8 @@ import { useAuth } from '../hooks/useAuth';
 import { supabaseClient } from '../utils/supabaseClient';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { generateInvoicePDF } from '../utils/Pdfgenerator';
-import { shareInvoice, shareViaWhatsApp, copyInvoiceToClipboard } from '../utils/ShareUtilPage';
-import { Download, Share2, X, CheckCircle, Search, ClipboardCopy, MessageCircle, Inbox } from 'lucide-react';
+import { shareInvoice } from '../utils/ShareUtilPage';
+import { Download, Share2, X, CheckCircle, Search, Inbox, Eye, Lock, Pencil, Plus, Minus, Trash2 } from 'lucide-react';
 
 const STATUS_LABELS = {
   draft:   'Draft',
@@ -22,6 +22,21 @@ const BADGE_CLASS = {
   overdue: 'badge badge-cancel',
 };
 
+// Status yang sama sekali tidak bisa diubah lagi
+const LOCKED_STATUSES = ['paid', 'cancel'];
+
+// Aturan transisi status: return true jika boleh pindah dari `current` ke `target`
+const isStatusTransitionAllowed = (current, target) => {
+  if (current === target) return true; // opsi status saat ini, tidak masalah ditampilkan
+  if (LOCKED_STATUSES.includes(current)) return false; // paid & cancel: tidak bisa ganti status sama sekali
+  if (current === 'sent' && target === 'draft') return false; // sent: tidak bisa balik ke draft
+  return true;
+};
+
+// Status yang masih memperbolehkan invoice & item produknya diedit
+const EDITABLE_STATUSES = ['draft'];
+const isInvoiceEditable = (status) => EDITABLE_STATUSES.includes(status);
+
 export default function History({ subscription }) {
   const { user } = useAuth();
   const isPremium = subscription?.subscription_plans?.name && subscription.subscription_plans.name !== 'Free';
@@ -31,10 +46,17 @@ export default function History({ subscription }) {
   const [filter, setFilter]                   = useState('all');
   const [searchTerm, setSearchTerm]           = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [showViewModal, setShowViewModal]     = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [showShareModal, setShowShareModal]   = useState(false);
   const [businessInfo, setBusinessInfo]       = useState({});
   const [toast, setToast]                     = useState('');
+
+  const [showEditModal, setShowEditModal]         = useState(false);
+  const [editForm, setEditForm]                   = useState(null); // { customer_name, due_date, items: [] }
+  const [products, setProducts]                   = useState([]);
+  const [loadingProducts, setLoadingProducts]     = useState(false);
+  const [savingEdit, setSavingEdit]               = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState('');
 
   useEffect(() => {
     loadInvoices();
@@ -74,8 +96,21 @@ export default function History({ subscription }) {
     } catch {}
   };
 
+  const handleOpenStatusModal = (invoice) => {
+    if (LOCKED_STATUSES.includes(invoice.status)) {
+      showToast(`Status "${STATUS_LABELS[invoice.status] || invoice.status}" tidak dapat diubah`);
+      return;
+    }
+    setSelectedInvoice(invoice);
+    setShowStatusModal(true);
+  };
+
   const handleChangeStatus = async (newStatus) => {
     if (!selectedInvoice) return;
+    if (!isStatusTransitionAllowed(selectedInvoice.status, newStatus)) {
+      showToast('Perubahan status ini tidak diizinkan');
+      return;
+    }
     try {
       const { error } = await supabaseClient
         .from('invoices')
@@ -93,6 +128,123 @@ export default function History({ subscription }) {
     }
   };
 
+  const loadProducts = async () => {
+    if (products.length > 0) return; // sudah pernah dimuat, tidak perlu fetch ulang
+    setLoadingProducts(true);
+    try {
+      const { data, error } = await supabaseClient
+        .from('products')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('id', { ascending: true });
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleOpenEditModal = (invoice) => {
+    if (!isInvoiceEditable(invoice.status)) {
+      showToast('Invoice ini sudah tidak bisa diedit');
+      return;
+    }
+    setSelectedInvoice(invoice);
+    setEditForm({
+      customer_name: invoice.customer_name || '',
+      due_date: invoice.due_date ? String(invoice.due_date).slice(0, 10) : '',
+      items: (invoice.items || []).map((it) => ({ ...it })),
+    });
+    setSelectedProductId('');
+    loadProducts();
+    setShowEditModal(true);
+  };
+
+  const updateEditField = (field, value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const getProductName = (p) => p.name || p.product_name || p.title || 'Produk';
+  const getProductPrice = (p) => Number(p.price ?? p.selling_price ?? p.harga ?? 0);
+
+  const handleAddProductItem = () => {
+    if (!selectedProductId) return;
+    const product = products.find((p) => String(p.id) === String(selectedProductId));
+    if (!product) return;
+    const name = getProductName(product);
+    const price = getProductPrice(product);
+    setEditForm((prev) => {
+      const items = [...prev.items];
+      const existingIdx = items.findIndex((it) => it.description === name);
+      if (existingIdx > -1) {
+        items[existingIdx] = { ...items[existingIdx], quantity: items[existingIdx].quantity + 1 };
+      } else {
+        const newId = items.length > 0 ? Math.max(...items.map((it) => Number(it.id) || 0)) + 1 : 1;
+        items.push({ id: newId, description: name, price, quantity: 1 });
+      }
+      return { ...prev, items };
+    });
+    setSelectedProductId('');
+  };
+
+  const handleItemQtyChange = (id, delta) => {
+    setEditForm((prev) => ({
+      ...prev,
+      items: prev.items.map((it) =>
+        it.id === id ? { ...it, quantity: Math.max(1, (Number(it.quantity) || 0) + delta) } : it
+      ),
+    }));
+  };
+
+  const handleRemoveItem = (id) => {
+    setEditForm((prev) => ({
+      ...prev,
+      items: prev.items.filter((it) => it.id !== id),
+    }));
+  };
+
+  const handleSaveEditInvoice = async () => {
+    if (!selectedInvoice || !editForm) return;
+    if (editForm.items.length === 0) {
+      showToast('Invoice harus memiliki minimal 1 item');
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const total = editForm.items.reduce(
+        (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 0),
+        0
+      );
+      const { error } = await supabaseClient
+        .from('invoices')
+        .update({
+          customer_name: editForm.customer_name,
+          due_date: editForm.due_date || null,
+          items: editForm.items,
+          total,
+        })
+        .eq('id', selectedInvoice.id);
+      if (error) throw error;
+      setInvoices((prev) =>
+        prev.map((inv) =>
+          inv.id === selectedInvoice.id
+            ? { ...inv, customer_name: editForm.customer_name, due_date: editForm.due_date, items: editForm.items, total }
+            : inv
+        )
+      );
+      setShowEditModal(false);
+      setSelectedInvoice(null);
+      setEditForm(null);
+      showToast('Invoice berhasil diperbarui');
+    } catch (err) {
+      showToast('Gagal menyimpan perubahan: ' + err.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const handleDownloadPDF = async (invoice) => {
     showToast('Membuat PDF...');
     const logo = localStorage.getItem('company_logo_base64') || '';
@@ -100,25 +252,13 @@ export default function History({ subscription }) {
     showToast(ok ? 'PDF berhasil diunduh' : 'Gagal membuat PDF');
   };
 
-  const handleShareNative = async (invoice) => {
+  const handleSharePDF = async (invoice) => {
+    setShowViewModal(false);
+    showToast('Menyiapkan PDF untuk dibagikan...');
     const logo = localStorage.getItem('company_logo_base64') || '';
     const result = await shareInvoice(invoice, { ...businessInfo, logo_base64: logo }, isPremium);
     if (result.method === 'aborted') return;
     showToast(result.success ? 'Berhasil dibagikan' : 'Gagal membagikan');
-    setShowShareModal(false);
-  };
-
-  const handleShareWhatsApp = (invoice) => {
-    const logo = localStorage.getItem('company_logo_base64') || '';
-    shareViaWhatsApp(invoice, { ...businessInfo, logo_base64: logo }, isPremium);
-    setShowShareModal(false);
-  };
-
-  const handleCopyText = async (invoice) => {
-    const logo = localStorage.getItem('company_logo_base64') || '';
-    const ok = await copyInvoiceToClipboard(invoice, { ...businessInfo, logo_base64: logo }, isPremium);
-    showToast(ok ? 'Berhasil disalin ke clipboard' : 'Gagal menyalin');
-    setShowShareModal(false);
   };
 
   const filteredInvoices = invoices.filter((inv) => {
@@ -210,106 +350,384 @@ export default function History({ subscription }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredInvoices.map((inv) => (
-                    <tr key={inv.id}>
-                      <td style={{ fontWeight: 600, color: 'var(--primary)' }}>
-                        {inv.invoice_number}
-                      </td>
-                      <td style={{ color: 'var(--on-surface)' }}>{inv.customer_name}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>
-                        {formatCurrency(inv.total)}
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <button
-                          onClick={() => { setSelectedInvoice(inv); setShowStatusModal(true); }}
-                          className={BADGE_CLASS[inv.status] || 'badge badge-draft'}
-                          style={{ cursor: 'pointer', border: 'none', background: undefined }}
-                        >
-                          {inv.status}
-                        </button>
-                      </td>
-                      <td style={{ color: 'var(--on-surface-variant)', fontSize: 13 }}>
-                        {formatDate(inv.created_at)}
-                      </td>
-                      <td style={{ color: 'var(--on-surface-variant)', fontSize: 13 }}>
-                        {formatDate(inv.due_date)}
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+                  {filteredInvoices.map((inv) => {
+                    const statusLocked = LOCKED_STATUSES.includes(inv.status);
+                    return (
+                      <tr key={inv.id}>
+                        <td style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                          {inv.invoice_number}
+                        </td>
+                        <td style={{ color: 'var(--on-surface)' }}>{inv.customer_name}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>
+                          {formatCurrency(inv.total)}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
                           <button
-                            onClick={() => handleDownloadPDF(inv)}
-                            title="Download PDF"
-                            style={actionBtn('#e8f5e9', '#2e7d32')}
+                            onClick={() => handleOpenStatusModal(inv)}
+                            className={BADGE_CLASS[inv.status] || 'badge badge-draft'}
+                            style={{
+                              cursor: statusLocked ? 'not-allowed' : 'pointer',
+                              border: 'none',
+                              background: undefined,
+                              opacity: statusLocked ? 0.7 : 1,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
                           >
-                            <Download size={15} />
+                            {statusLocked && <Lock size={11} />}
+                            {inv.status}
                           </button>
-                          <button
-                            onClick={() => { setSelectedInvoice(inv); setShowShareModal(true); }}
-                            title="Bagikan"
-                            style={actionBtn('#e3f2fd', '#1565c0')}
-                          >
-                            <Share2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td style={{ color: 'var(--on-surface-variant)', fontSize: 13 }}>
+                          {formatDate(inv.created_at)}
+                        </td>
+                        <td style={{ color: 'var(--on-surface-variant)', fontSize: 13 }}>
+                          {formatDate(inv.due_date)}
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+                            <button
+                              onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }}
+                              title="Lihat Invoice"
+                              style={actionBtn('var(--surface-container)', 'var(--on-surface)')}
+                            >
+                              <Eye size={15} />
+                              &nbsp;Lihat
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           </div>
 
           <div id="history-cards" className="history-cards-mobile" style={{ display: 'none' }}>
-            {filteredInvoices.map((inv) => (
-              <div key={inv.id} className="history-card animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
-                <div className="history-card-header">
-                  <span className="history-card-number">{inv.invoice_number}</span>
-                  <button
-                    onClick={() => { setSelectedInvoice(inv); setShowStatusModal(true); }}
-                    className={BADGE_CLASS[inv.status] || 'badge badge-draft'}
-                    style={{ cursor: 'pointer', border: 'none' }}
-                  >
-                    {inv.status}
-                  </button>
+            {filteredInvoices.map((inv) => {
+              const statusLocked = LOCKED_STATUSES.includes(inv.status);
+              return (
+                <div key={inv.id} className="history-card animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
+                  <div className="history-card-header">
+                    <span className="history-card-number">{inv.invoice_number}</span>
+                    <button
+                      onClick={() => handleOpenStatusModal(inv)}
+                      className={BADGE_CLASS[inv.status] || 'badge badge-draft'}
+                      style={{
+                        cursor: statusLocked ? 'not-allowed' : 'pointer',
+                        border: 'none',
+                        opacity: statusLocked ? 0.7 : 1,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      {statusLocked && <Lock size={11} />}
+                      {inv.status}
+                    </button>
+                  </div>
+                  <div className="history-card-body">
+                    <div className="card-field">
+                      <span className="card-field-label">Pelanggan</span>
+                      <span className="card-field-value">{inv.customer_name}</span>
+                    </div>
+                    <div className="card-field">
+                      <span className="card-field-label">Total</span>
+                      <span className="card-field-value" style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                        {formatCurrency(inv.total)}
+                      </span>
+                    </div>
+                    <div className="card-field">
+                      <span className="card-field-label">Tanggal</span>
+                      <span className="card-field-value">{formatDate(inv.created_at)}</span>
+                    </div>
+                    <div className="card-field">
+                      <span className="card-field-label">Jatuh Tempo</span>
+                      <span className="card-field-value">{formatDate(inv.due_date)}</span>
+                    </div>
+                  </div>
+                  <div className="history-card-footer" style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => { setSelectedInvoice(inv); setShowViewModal(true); }} style={{ flex: 1 }}>
+                      <Eye size={13} style={{ display: 'inline', marginRight: 4 }} />
+                      Lihat Invoice
+                    </button>
+                    {isInvoiceEditable(inv.status) && (
+                      <button onClick={() => handleOpenEditModal(inv)} style={{ flex: 1 }}>
+                        <Pencil size={13} style={{ display: 'inline', marginRight: 4 }} />
+                        Edit
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="history-card-body">
-                  <div className="card-field">
-                    <span className="card-field-label">Pelanggan</span>
-                    <span className="card-field-value">{inv.customer_name}</span>
-                  </div>
-                  <div className="card-field">
-                    <span className="card-field-label">Total</span>
-                    <span className="card-field-value" style={{ color: 'var(--primary)', fontWeight: 700 }}>
-                      {formatCurrency(inv.total)}
-                    </span>
-                  </div>
-                  <div className="card-field">
-                    <span className="card-field-label">Tanggal</span>
-                    <span className="card-field-value">{formatDate(inv.created_at)}</span>
-                  </div>
-                  <div className="card-field">
-                    <span className="card-field-label">Jatuh Tempo</span>
-                    <span className="card-field-value">{formatDate(inv.due_date)}</span>
-                  </div>
-                  {/*<div className="card-field">
-                    <span className="card-field-label">Metode</span>
-                    <span className="card-field-value">{inv.payment_method || '-'}</span>
-            </div> */}
-                </div>
-                <div className="history-card-footer">
-                  <button onClick={() => handleDownloadPDF(inv)}>
-                    <Download size={13} style={{ display: 'inline', marginRight: 4 }} />
-                    PDF
-                  </button>
-                  <button onClick={() => { setSelectedInvoice(inv); setShowShareModal(true); }}>
-                    <Share2 size={13} style={{ display: 'inline', marginRight: 4 }} />
-                    Share
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
+      )}
+
+      {showViewModal && selectedInvoice && (
+        <div
+          className="modal active"
+          onClick={(e) => e.target === e.currentTarget && setShowViewModal(false)}
+        >
+          <div className="modal-content" style={{ maxWidth: 400 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h2 className="modal-header" style={{ margin: 0 }}>Detail Invoice</h2>
+              <button onClick={() => setShowViewModal(false)} style={closeBtn}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 22 }}>
+              <div style={rowStyle}>
+                <span style={labelStyle}>No. Invoice</span>
+                <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{selectedInvoice.invoice_number}</span>
+              </div>
+              <div style={rowStyle}>
+                <span style={labelStyle}>Pelanggan</span>
+                <span style={{ fontWeight: 600 }}>{selectedInvoice.customer_name}</span>
+              </div>
+              <div style={rowStyle}>
+                <span style={labelStyle}>Total</span>
+                <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(selectedInvoice.total)}</span>
+              </div>
+              <div style={rowStyle}>
+                <span style={labelStyle}>Status</span>
+                <span className={BADGE_CLASS[selectedInvoice.status] || 'badge badge-draft'}>
+                  {selectedInvoice.status}
+                </span>
+              </div>
+              <div style={rowStyle}>
+                <span style={labelStyle}>Tanggal</span>
+                <span>{formatDate(selectedInvoice.created_at)}</span>
+              </div>
+              <div style={rowStyle}>
+                <span style={labelStyle}>Jatuh Tempo</span>
+                <span>{formatDate(selectedInvoice.due_date)}</span>
+              </div>
+            </div>
+
+            {selectedInvoice.items && selectedInvoice.items.length > 0 && (
+              <div style={{ marginBottom: 22 }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--on-surface-variant)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3 }}>
+                  Item Invoice
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {selectedInvoice.items.map((it, idx) => (
+                    <div
+                      key={it.id ?? idx}
+                      style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                        fontSize: 13, padding: '8px 10px', background: 'var(--surface-container)', borderRadius: 8,
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{it.description}</div>
+                        <div style={{ color: 'var(--on-surface-variant)', fontSize: 12 }}>
+                          {it.quantity} x {formatCurrency(it.price)}
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: 700, color: 'var(--primary)' }}>
+                        {formatCurrency((Number(it.quantity) || 0) * (Number(it.price) || 0))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isInvoiceEditable(selectedInvoice.status) && (
+              <button
+                onClick={() => { setShowViewModal(false); handleOpenEditModal(selectedInvoice); }}
+                className="btn"
+                style={{ width: '100%', marginBottom: 10, ...shareOptionStyle('#fff3e0', '#e65100'), justifyContent: 'center' }}
+              >
+                <Pencil size={16} />
+                Edit Invoice
+              </button>
+            )}
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => handleDownloadPDF(selectedInvoice)}
+                className="btn"
+                style={{ flex: 1, ...shareOptionStyle('#e8f5e9', '#2e7d32'), justifyContent: 'center' }}
+              >
+                <Download size={16} />
+                Download PDF
+              </button>
+              <button
+                onClick={() => handleSharePDF(selectedInvoice)}
+                className="btn"
+                style={{ flex: 1, ...shareOptionStyle('#e3f2fd', '#1565c0'), justifyContent: 'center' }}
+              >
+                <Share2 size={16} />
+                Bagikan
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowViewModal(false)}
+              className="btn btn-secondary"
+              style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && selectedInvoice && editForm && (
+        <div
+          className="modal active"
+          onClick={(e) => e.target === e.currentTarget && setShowEditModal(false)}
+        >
+          <div className="modal-content" style={{ maxWidth: 460 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h2 className="modal-header" style={{ margin: 0 }}>Edit Invoice</h2>
+              <button onClick={() => setShowEditModal(false)} style={closeBtn}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: 13, color: 'var(--on-surface-variant)', marginBottom: 16 }}>
+              Invoice: <strong>{selectedInvoice.invoice_number}</strong>
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
+              <div>
+                <label style={labelStyle}>Nama Pelanggan</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={editForm.customer_name}
+                  onChange={(e) => updateEditField('customer_name', e.target.value)}
+                  style={{ marginTop: 4 }}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Jatuh Tempo</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={editForm.due_date}
+                  onChange={(e) => updateEditField('due_date', e.target.value)}
+                  style={{ marginTop: 4 }}
+                />
+              </div>
+            </div>
+
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--on-surface-variant)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: .3 }}>
+              Item Produk
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12, maxHeight: 240, overflowY: 'auto' }}>
+              {editForm.items.length === 0 && (
+                <p style={{ fontSize: 13, color: 'var(--outline)' }}>
+                  Belum ada item. Tambahkan produk di bawah.
+                </p>
+              )}
+              {editForm.items.map((it) => (
+                <div
+                  key={it.id}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'var(--surface-container)', borderRadius: 8 }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {it.description}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>
+                      {formatCurrency(it.price)} / item
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      onClick={() => handleItemQtyChange(it.id, -1)}
+                      style={{ ...actionBtn('var(--surface)', 'var(--on-surface)'), padding: '4px 6px' }}
+                    >
+                      <Minus size={13} />
+                    </button>
+                    <span style={{ minWidth: 20, textAlign: 'center', fontWeight: 700, fontSize: 13 }}>
+                      {it.quantity}
+                    </span>
+                    <button
+                      onClick={() => handleItemQtyChange(it.id, 1)}
+                      style={{ ...actionBtn('var(--surface)', 'var(--on-surface)'), padding: '4px 6px' }}
+                    >
+                      <Plus size={13} />
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveItem(it.id)}
+                    title="Hapus item"
+                    style={{ ...actionBtn('#ffebee', '#c62828'), padding: '4px 6px' }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+              <select
+                className="form-input"
+                value={selectedProductId}
+                onChange={(e) => setSelectedProductId(e.target.value)}
+                style={{ flex: 1 }}
+              >
+                <option value="">
+                  {loadingProducts ? 'Memuat produk...' : 'Pilih produk'}
+                </option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {getProductName(p)} — {formatCurrency(getProductPrice(p))}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleAddProductItem}
+                disabled={!selectedProductId}
+                className="btn"
+                style={{
+                  ...actionBtn('var(--primary-container)', 'var(--on-primary-container)'),
+                  opacity: selectedProductId ? 1 : 0.5,
+                  cursor: selectedProductId ? 'pointer' : 'not-allowed',
+                }}
+              >
+                <Plus size={15} />
+              </button>
+            </div>
+
+            <div style={{ ...rowStyle, marginBottom: 18, paddingTop: 12, borderTop: '1px solid var(--surface-container)' }}>
+              <span style={{ fontWeight: 700 }}>Total</span>
+              <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: 16 }}>
+                {formatCurrency(
+                  editForm.items.reduce((sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 0), 0)
+                )}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="btn btn-secondary"
+                style={{ flex: 1, justifyContent: 'center' }}
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleSaveEditInvoice}
+                disabled={savingEdit}
+                className="btn"
+                style={{ flex: 1, justifyContent: 'center', ...shareOptionStyle('var(--primary-container)', 'var(--on-primary-container)'), opacity: savingEdit ? 0.7 : 1 }}
+              >
+                {savingEdit ? 'Menyimpan...' : 'Simpan Perubahan'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {showStatusModal && selectedInvoice && (
@@ -328,87 +746,38 @@ export default function History({ subscription }) {
               Invoice: <strong>{selectedInvoice.invoice_number}</strong>
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {['draft', 'sent', 'paid', 'cancel'].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => handleChangeStatus(s)}
-                  className="btn"
-                  style={{
-                    justifyContent: 'flex-start',
-                    background: selectedInvoice.status === s
-                      ? 'var(--primary-container)'
-                      : 'var(--surface-container)',
-                    color: selectedInvoice.status === s
-                      ? 'var(--on-primary-container)'
-                      : 'var(--on-surface)',
-                    borderRadius: 8,
-                  }}
-                >
-                  <CheckCircle size={16} />
-                  {STATUS_LABELS[s]}
-                </button>
-              ))}
+              {['draft', 'sent', 'paid', 'cancel'].map((s) => {
+                const allowed = isStatusTransitionAllowed(selectedInvoice.status, s);
+                const isCurrent = selectedInvoice.status === s;
+                return (
+                  <button
+                    key={s}
+                    disabled={!allowed}
+                    onClick={() => allowed && handleChangeStatus(s)}
+                    className="btn"
+                    style={{
+                      justifyContent: 'flex-start',
+                      background: isCurrent
+                        ? 'var(--primary-container)'
+                        : 'var(--surface-container)',
+                      color: isCurrent
+                        ? 'var(--on-primary-container)'
+                        : allowed
+                          ? 'var(--on-surface)'
+                          : 'var(--outline)',
+                      borderRadius: 8,
+                      opacity: allowed ? 1 : 0.5,
+                      cursor: allowed ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {allowed ? <CheckCircle size={16} /> : <Lock size={14} />}
+                    {STATUS_LABELS[s]}
+                  </button>
+                );
+              })}
             </div>
             <button
               onClick={() => setShowStatusModal(false)}
-              className="btn btn-secondary"
-              style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}
-            >
-              Tutup
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showShareModal && selectedInvoice && (
-        <div
-          className="modal active"
-          onClick={(e) => e.target === e.currentTarget && setShowShareModal(false)}
-        >
-          <div className="modal-content" style={{ maxWidth: 360 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h2 className="modal-header" style={{ margin: 0 }}>Bagikan Invoice</h2>
-              <button onClick={() => setShowShareModal(false)} style={closeBtn}>
-                <X size={20} />
-              </button>
-            </div>
-            <p style={{ fontSize: 13, color: 'var(--on-surface-variant)', marginBottom: 20 }}>
-              {selectedInvoice.invoice_number} &nbsp;•&nbsp; <strong>{formatCurrency(selectedInvoice.total)}</strong>
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {navigator.canShare && (
-                <button
-                  onClick={() => handleShareNative(selectedInvoice)}
-                  className="btn"
-                  style={shareOptionStyle('var(--primary-container)', 'var(--on-primary-container)')}
-                >
-                  <Share2 size={18} />
-                  Bagikan (PDF / Native)
-                </button>
-              )}
-
-              <button
-                onClick={() => handleShareWhatsApp(selectedInvoice)}
-                className="btn"
-                style={shareOptionStyle('#e8f5e9', '#2e7d32')}
-              >
-                <MessageCircle size={18} />
-                WhatsApp
-              </button>
-
-              <button
-                onClick={() => handleCopyText(selectedInvoice)}
-                className="btn"
-                style={shareOptionStyle('var(--surface-container)', 'var(--on-surface)')}
-              >
-                <ClipboardCopy size={18} />
-                Salin Ringkasan
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowShareModal(false)}
               className="btn btn-secondary"
               style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}
             >
@@ -451,10 +820,12 @@ const actionBtn = (bg, color) => ({
   color,
   border: 'none',
   borderRadius: 6,
-  padding: '6px 8px',
+  padding: '6px 10px',
   cursor: 'pointer',
   display: 'inline-flex',
   alignItems: 'center',
+  fontSize: 12,
+  fontWeight: 600,
   transition: 'opacity .15s',
 });
 
@@ -475,5 +846,16 @@ const shareOptionStyle = (bg, color) => ({
   padding: '12px 16px',
   fontSize: 14,
   fontWeight: 600,
-  gap: 12,
+  gap: 8,
 });
+
+const rowStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+};
+
+const labelStyle = {
+  fontSize: 12,
+  color: 'var(--on-surface-variant)',
+};

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabaseClient } from '../utils/supabaseClient';
 import { DEFAULT_LOGO_BASE64 } from '../utils/defaultLogo';
 import { generatePalette } from '../utils/colorUtils';
-import { Save, AlertCircle, User, Building2, Phone, Database, Info, AlertTriangle, CheckCircle2, Upload, ImageIcon, X } from 'lucide-react';
+import { exportBackupExcel } from '../utils/exportExcel';
+import { Save, AlertCircle, User, Building2, Phone, Database, Info, AlertTriangle, CheckCircle2, Upload, ImageIcon, X, Download, HardDriveDownload, FileSpreadsheet, CheckCircle } from 'lucide-react';
 
 export default function Settings({ user, subscription }) {
   const [settings, setSettings] = useState({ business_name: '', city: '', contact: '', brand_color: '#58341d', footer: '', notes: '' });
@@ -11,6 +12,8 @@ export default function Settings({ user, subscription }) {
   const [message, setMessage]   = useState({ type: '', text: '' });
   const [logoBase64, setLogoBase64] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportDone, setExportDone] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => { loadSettings(); }, [user]);
@@ -434,7 +437,9 @@ export default function Settings({ user, subscription }) {
           </div>
         </div>
 
-        <div className="animate-fade-in-up" style={{ animationDelay: '0.12s', marginBottom: 20 }}>
+        
+
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.15s', marginBottom: 20 }}>
           {message.text && (
             <div style={{
               marginBottom: 16,
@@ -466,6 +471,56 @@ export default function Settings({ user, subscription }) {
               <><Save size={18} /> Simpan Semua Pengaturan</>
             )}
           </button>
+        </div>
+
+        <div className="card animate-fade-in-up" style={{ animationDelay: '0.12s' }}>
+          <h3 style={cardHeading}>
+            <div style={iconBadge}>
+              <HardDriveDownload size={16} style={{ color: '#ffeadf' }} />
+            </div>
+            Backup & Export
+          </h3>
+          <p style={{ fontSize: 12, color: 'var(--outline)', marginBottom: 18, marginTop: 4, fontStyle: 'italic' }}>
+            Download semua data bisnis Anda dalam format Excel untuk backup
+          </p>
+
+
+          <button
+            onClick={async () => {
+              setExporting(true);
+              setExportDone(false);
+              try {
+                await exportBackupExcel(user.id, settings.business_name);
+                setExportDone(true);
+                setTimeout(() => setExportDone(false), 4000);
+              } catch (err) {
+                setMessage({ type: 'error', text: 'Gagal export: ' + err.message });
+                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+              } finally {
+                setExporting(false);
+              }
+            }}
+            disabled={exporting}
+            className="btn btn-secondary"
+            style={{
+              width: '100%', justifyContent: 'center', padding: '13px 20px', fontSize: 14,
+              background: exportDone ? 'var(--success)' : undefined,
+              borderColor: exportDone ? 'var(--success)' : undefined,
+            }}
+          >
+            {exporting ? (
+              <><span className="loading-spinner" /> Menyiapkan File Excel...</>
+            ) : exportDone ? (
+              <><CheckCircle size={17} /> Backup Berhasil Diunduh!</>
+            ) : (
+              <><FileSpreadsheet size={17} /> Download Backup Excel</>
+            )}
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--outline)', marginTop: 14 }}>
+            <Info size={13} style={{ flexShrink: 0 }} />
+            <span>Data diproses langsung di browser Anda, tidak dikirim ke server manapun.</span>
+          </div>
         </div>
 
         {/* ── Info Database ── */}

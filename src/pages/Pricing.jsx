@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useSubscription } from '../hooks/useSubscription';
+import { supabaseClient } from '../utils/supabaseClient';
 import { formatCurrency } from '../utils/formatters';
-import { Check, Zap, Crown, Star, Gift } from 'lucide-react';
+import { Check, Zap, Crown, Star, Gift, ShoppingBag } from 'lucide-react';
 
 const PLAN_ICONS = { Free: Gift, Starter: Zap, Professional: Star, Enterprise: Crown };
 const PLAN_ACCENTS = {
@@ -14,20 +15,36 @@ const PLAN_ACCENTS = {
 
 export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
   const { user } = useAuth();
-  const { getPlans, createSubscription } = useSubscription();
+  const { getPlans, createSubscription, checkInvoiceLimit } = useSubscription();
   const [plans, setPlans]     = useState([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast]     = useState('');
   const [showContactModal, setShowContactModal] = useState(false);
+  const [userCredits, setUserCredits] = useState(0);
+  const [quotaInfo, setQuotaInfo] = useState({ count: 0, limit: 10, credits: 0 });
 
-  useEffect(() => { loadPlans(); }, []);
+  useEffect(() => { 
+    loadPlans(); 
+    if (user) fetchUserCredits();
+  }, [user]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
+
+  const fetchUserCredits = async () => {
+    try {
+      const res = await checkInvoiceLimit(user.id);
+      setQuotaInfo(res);
+      setUserCredits(res.credits || 0);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const loadPlans = async () => {
     try {
       const allPlans = await getPlans();
-      setPlans(allPlans.filter(plan => plan.name !== 'Enterprise'));
+      // Filter out Enterprise and Professional
+      setPlans(allPlans.filter(plan => plan.name !== 'Enterprise' && plan.name !== 'Professional'));
     } catch (e) { console.error(e); }
   };
 
@@ -40,7 +57,37 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
   return (
     <div>
       <h1 className="page-title">Pilih Paket</h1>
-      <p className="page-sub">Upgrade untuk mendapatkan lebih banyak fitur dan invoice tak terbatas</p>
+      <p className="page-sub">Upgrade untuk mendapatkan lebih banyak fitur dan kuota invoice</p>
+
+      {/* ─── Subscription Overview Box ─── */}
+      <div className="card animate-fade-in-up" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        flexWrap: 'wrap', 
+        gap: 16, 
+        marginBottom: 24, 
+        padding: '20px 24px' 
+      }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 12, color: 'var(--outline)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Status Langganan Anda</p>
+          <h2 style={{ margin: '4px 0 0', fontFamily: "'Source Serif 4', serif", fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>
+            Paket {currentPlanName}
+          </h2>
+        </div>
+        <div style={{ background: 'var(--surface-container)', padding: '12px 18px', borderRadius: 10, textAlign: 'right' }}>
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--outline)', fontWeight: 600 }}>SALDO INVOICE CREDITS (ADD-ON)</p>
+          <p style={{ margin: '2px 0 0', fontSize: 18, fontWeight: 800, color: 'var(--primary)' }}>
+            {userCredits} Credits
+            {currentPlanName === 'Free' && userCredits > 0 && (
+              <span style={{ fontSize: 10, display: 'block', color: 'var(--error)', fontWeight: 600, fontStyle: 'italic', marginTop: 2 }}>
+                (Dibekukan - Butuh Langganan Aktif)
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
+
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -108,9 +155,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
                     gap: 8,
                   }}>
                     {plan.name}
-                    {plan.name === 'Professional' && (
-                      <span style={{ fontSize: 10, background: 'var(--primary)', color: '#fff', padding: '2px 6px', borderRadius: 4, letterSpacing: '0.05em' }}>SOON</span>
-                    )}
                   </h3>
                 </div>
 
@@ -119,13 +163,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
                     <p style={{ fontSize: 28, fontWeight: 700, color: '#2e7d32', fontFamily: "'Source Serif 4', serif" }}>
                       Gratis
                     </p>
-                  ) : plan.name === 'Professional' ? (
-                    <>
-                      <p style={{ fontSize: 26, fontWeight: 700, color: 'var(--primary)', fontFamily: "'Source Serif 4', serif" }}>
-                        Rp ???
-                      </p>
-                      <p style={{ fontSize: 12, color: 'var(--outline)' }}>/bulan</p>
-                    </>
                   ) : (
                     <>
                       <p style={{ fontSize: 26, fontWeight: 700, color: 'var(--primary)', fontFamily: "'Source Serif 4', serif" }}>
@@ -146,7 +183,7 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
                   borderRadius: 999,
                   marginBottom: 16,
                 }}>
-                  {plan.invoice_limit === -1 ? '∞ Invoice' : `${plan.invoice_limit} Invoice/bulan`}
+                  {plan.name === 'Free' ? '10 Invoice/bulan' : plan.name === 'Starter' ? '100 Invoice/bulan' : plan.invoice_limit === -1 ? '∞ Invoice' : `${plan.invoice_limit} Invoice/bulan`}
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {features.map((f, i) => (
@@ -167,16 +204,6 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
                   }}>
                     Paket Saat Ini
                   </button>
-                ) : plan.name === 'Professional' ? (
-                  <button disabled className="btn" style={{
-                    width: '100%', justifyContent: 'center',
-                    background: 'var(--surface-container)',
-                    color: 'var(--outline)',
-                    cursor: 'not-allowed',
-                    borderRadius: 999,
-                  }}>
-                    Segera Hadir
-                  </button>
                 ) : (
                   <button
                     onClick={() => handleSubscribe(plan.id)}
@@ -192,6 +219,84 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
           );
         })}
       </div>
+      
+      <div className="card animate-fade-in-up" style={{ marginTop: 32, animationDelay: '0.1s' }}>
+        <h3 style={{
+          fontFamily: "'Source Serif 4', serif",
+          fontSize: 20,
+          fontWeight: 700,
+          color: 'var(--primary)',
+          marginBottom: 6,
+        }}>
+          Add-on Kuota Invoice
+        </h3>
+        <p style={{ fontSize: 13, color: 'var(--outline)', marginBottom: 24 }}>
+          Butuh kuota tambahan tanpa upgrade paket? Beli Add-on kuota invoice sekali bayar.
+        </p>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: 16,
+        }}>
+          {[
+            { credits: 100, price: 15000, desc: 'Tambahan saldo 100 invoice' },
+            { credits: 500, price: 50000, desc: 'Tambahan saldo 500 invoice (Lebih Hemat)' },
+          ].map((addon) => {
+            const isSubActive = currentSubscription && currentPlanName !== 'Free' && currentSubscription.status === 'active';
+            
+            return (
+              <div
+                key={addon.credits}
+                style={{
+                  background: '#fff',
+                  border: '1px solid var(--outline-variant)',
+                  borderRadius: 12,
+                  padding: 20,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                }}
+              >
+                <div>
+                  <h4 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: 'var(--primary)' }}>
+                    +{addon.credits} Invoice
+                  </h4>
+                  <p style={{ fontSize: 12, color: 'var(--outline)', margin: '0 0 12px' }}>
+                    {addon.desc}
+                  </p>
+                  <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--secondary)', margin: '0 0 16px' }}>
+                    {formatCurrency(addon.price)}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (!isSubActive) {
+                      showToast('⚠️ Add-on hanya dapat dibeli jika memiliki langganan aktif!');
+                      return;
+                    }
+                    const msg = encodeURIComponent(`Halo Admin, saya ingin membeli Add-on +${addon.credits} Invoice.`);
+                    window.open(`https://wa.me/6282123259726?text=${msg}`, '_blank');
+                  }}
+                  className="btn btn-secondary"
+                  style={{
+                    width: '100%',
+                    justifyContent: 'center',
+                    fontSize: 12.5,
+                    padding: '8px 16px',
+                    borderColor: isSubActive ? 'var(--primary)' : 'var(--outline-variant)',
+                    color: isSubActive ? 'var(--primary)' : 'var(--outline)',
+                  }}
+                >
+                  Beli Add-on
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="card">
         <h3 style={{
@@ -206,10 +311,10 @@ export default function Pricing({ currentSubscription, onSubscriptionUpdate }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {[
-            ['📝 Bisa upgrade kapan saja?', 'Ya, Anda bisa upgrade atau downgrade paket kapan saja. Perubahan langsung efektif.'],
-            ['💰 Cara bayar?', 'Kami mengirimkan instruksi pembayaran via WhatsApp setelah Anda memilih paket.'],
-            ['🔄 Ada komitmen jangka panjang?', 'Tidak ada. Billing per bulan, bisa dibatalkan kapan saja tanpa penalti.'],
-            ['🆘 Butuh bantuan?', 'Hubungi TinkerWorks@gmail.com atau WhatsApp untuk konsultasi gratis.'],
+            ['• Bisa upgrade kapan saja?', 'Ya, Anda bisa upgrade atau downgrade paket kapan saja. Perubahan langsung efektif.'],
+            ['• Cara bayar?', 'Kami mengirimkan instruksi pembayaran via WhatsApp setelah Anda memilih paket.'],
+            ['• Ada komitmen jangka panjang?', 'Tidak ada. Billing per bulan, bisa dibatalkan kapan saja tanpa penalti.'],
+            ['• Butuh bantuan?', 'Hubungi TinkerWorks@gmail.com atau WhatsApp untuk konsultasi gratis.'],
           ].map(([q, a]) => (
             <div key={q} style={{
               background: 'var(--surface-container)',

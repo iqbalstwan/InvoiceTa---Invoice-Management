@@ -62,11 +62,11 @@ export default function Expenses({ subscription }) {
         ]);
 
       if (error) throw error;
-      showToast('✅ Pengeluaran berhasil dicatat');
+      showToast('Pengeluaran berhasil dicatat');
       resetForm();
       loadExpenses();
     } catch (error) {
-      showToast('❌ Error: ' + error.message);
+      showToast('Error: ' + error.message);
     }
   };
 
@@ -81,9 +81,9 @@ export default function Expenses({ subscription }) {
 
       if (error) throw error;
       loadExpenses();
-      showToast('✅ Catatan berhasil dihapus');
+      showToast('Catatan berhasil dihapus');
     } catch (error) {
-      showToast('❌ Error: ' + error.message);
+      showToast('Error: ' + error.message);
     }
   };
 
@@ -140,7 +140,7 @@ export default function Expenses({ subscription }) {
           className="btn btn-primary"
         >
           <Plus size={16} />
-          Catat Pengeluaran
+         
         </button>
       </div>
 

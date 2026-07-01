@@ -49,7 +49,6 @@ export function useSubscription() {
     setLoading(true);
     setError(null);
     try {
-      // Deactivate any existing subscription
       await supabaseClient
         .from('user_subscriptions')
         .update({ status: 'inactive' })
@@ -84,22 +83,53 @@ export function useSubscription() {
     }
   };
 
-  const checkInvoiceLimit = async (userId, currentInvoiceCount) => {
+  const checkInvoiceLimit = async (userId) => {
     try {
       const subscription = await getUserSubscription(userId);
       
-      if (!subscription) {
-        // Free tier
-        return currentInvoiceCount < 5;
+      let limit = 10; // Default Free
+      let startDate = new Date();
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
+
+      const isSubscriptionActive = subscription && subscription.subscription_plans && subscription.subscription_plans.name !== 'Free' && subscription.status === 'active';
+
+      if (isSubscriptionActive) {
+        limit = subscription.subscription_plans.invoice_limit || 100;
+        if (subscription.start_date) {
+          startDate = new Date(subscription.start_date);
+        }
       }
 
-      const limit = subscription.subscription_plans.invoice_limit;
-      if (limit === -1) return true; // Unlimited
+      const { count, error: countErr } = await supabaseClient
+        .from('invoices')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', startDate.toISOString());
+
+      if (countErr) throw countErr;
+
+      const { data: userData, error: userErr } = await supabaseClient
+        .from('users')
+        .select('invoice_credits')
+        .eq('id', userId)
+        .single();
+
+      if (userErr && userErr.code !== 'PGRST116') throw userErr;
+      const credits = userData?.invoice_credits || 0;
       
-      return currentInvoiceCount < limit;
+      if (count < limit) {
+        return { canCreate: true, useCredit: false, count, limit, credits };
+      }
+
+      if (isSubscriptionActive && credits > 0) {
+        return { canCreate: true, useCredit: true, count, limit, credits };
+      }
+
+      return { canCreate: false, useCredit: false, count, limit, credits };
     } catch (err) {
       console.error('Error checking limit:', err);
-      return false;
+      return { canCreate: false, useCredit: false, count: 0, limit: 10, credits: 0 };
     }
   };
 

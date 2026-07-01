@@ -37,7 +37,7 @@ function AppContent() {
 
       setSubscription(
         data ?? {
-          subscription_plans: { name: 'Free', invoice_limit: 5, price: 0 },
+          subscription_plans: { name: 'Free', invoice_limit: 10, price: 0 },
         }
       );
 

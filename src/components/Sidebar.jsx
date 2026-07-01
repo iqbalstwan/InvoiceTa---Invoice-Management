@@ -97,10 +97,9 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
             <img
               src={DEFAULT_LOGO_BASE64}
               alt="InvoiceTa Logo"
+              className="login-brand__logo"
               style={{
-                width: 180,
-    height: 'auto',
-    display: 'block',
+                marginBottom: 12,
               }}
             />
           )}

@@ -4,9 +4,55 @@ import { supabaseClient } from '../utils/supabaseClient';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { TrendingUp, DollarSign, FileText, Clock, Plus, BarChart3, Lock, CheckCircle } from 'lucide-react';
 
+function getDateRange(filter, customStart, customEnd) {
+  const now = new Date();
+  const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+  const endOfDay   = (d) => { const x = new Date(d); x.setHours(23, 59, 59, 999); return x; };
+
+  switch (filter) {
+    case 'today':
+      return { start: startOfDay(now), end: endOfDay(now) };
+    case 'week': {
+      const day = now.getDay();
+      const diffToMonday = day === 0 ? 6 : day - 1;
+      const start = startOfDay(now);
+      start.setDate(now.getDate() - diffToMonday);
+      return { start, end: endOfDay(now) };
+    }
+    case 'month':
+      return { start: startOfDay(new Date(now.getFullYear(), now.getMonth(), 1)), end: endOfDay(now) };
+    case 'lastMonth':
+      return {
+        start: startOfDay(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
+        end: endOfDay(new Date(now.getFullYear(), now.getMonth(), 0)),
+      };
+    case 'year':
+      return { start: startOfDay(new Date(now.getFullYear(), 0, 1)), end: endOfDay(now) };
+    case 'custom':
+      if (!customStart || !customEnd) return null;
+      return { start: startOfDay(new Date(customStart)), end: endOfDay(new Date(customEnd)) };
+    case 'all':
+    default:
+      return null; // no filter, ambil semua data
+  }
+}
+
+const DATE_FILTER_OPTIONS = [
+  ['all', 'Semua Waktu'],
+  ['today', 'Hari Ini'],
+  ['week', 'Minggu Ini'],
+  ['month', 'Bulan Ini'],
+  ['lastMonth', 'Bulan Lalu'],
+  ['year', 'Tahun Ini'],
+  ['custom', 'Custom']
+];
+
 export default function Dashboard({ subscription, setCurrentPage }) {
   const { user } = useAuth();
   const [period, setPeriod]       = useState('month');
+  const [dateFilter, setDateFilter]   = useState('month');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd]     = useState('');
   const [stats, setStats]         = useState({ totalInvoices: 0, totalRevenue: 0, paidRevenue: 0, paidCount: 0, unpaidInvoices: 0, totalCost: 0, netProfit: 0 });
   const [chartData, setChartData] = useState([]);
   const [recentInvoices, setRecentInvoices] = useState([]);
@@ -19,25 +65,42 @@ export default function Dashboard({ subscription, setCurrentPage }) {
   useEffect(() => {
     if (user && isPremium) loadAnalytics();
     else setLoading(false);
-  }, [user, period, isPremium]);
+  }, [user, period, isPremium, dateFilter, customStart, customEnd]);
 
   const loadAnalytics = async () => {
+    if (dateFilter === 'custom' && (!customStart || !customEnd)) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const { data: invoices, error: fetchError } = await supabaseClient
+      const range = getDateRange(dateFilter, customStart, customEnd);
+
+      let invoiceQuery = supabaseClient
         .from('invoices')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (fetchError) throw new Error(fetchError.message);
-
-      const { data: expensesData, error: expenseError } = await supabaseClient
+      let expenseQuery = supabaseClient
         .from('expenses')
         .select('amount')
         .eq('user_id', user.id);
 
+      if (range) {
+        invoiceQuery = invoiceQuery
+          .gte('created_at', range.start.toISOString())
+          .lte('created_at', range.end.toISOString());
+        expenseQuery = expenseQuery
+          .gte('created_at', range.start.toISOString())
+          .lte('created_at', range.end.toISOString());
+      }
+
+      const { data: invoices, error: fetchError } = await invoiceQuery;
+      if (fetchError) throw new Error(fetchError.message);
+
+      const { data: expensesData, error: expenseError } = await expenseQuery;
       if (expenseError) throw new Error(expenseError.message);
 
       const totalCost = expensesData ? expensesData.reduce((s, e) => s + (e.amount || 0), 0) : 0;
@@ -139,6 +202,36 @@ export default function Dashboard({ subscription, setCurrentPage }) {
     <div>
       <h1 className="page-title">Dashboard</h1>
       <p className="page-sub">Ringkasan invoice dan pendapatan Anda</p>
+
+      <div className="date-filter-bar">
+        <select
+          className="date-filter-select"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+        >
+          {DATE_FILTER_OPTIONS.map(([val, lbl]) => (
+            <option key={val} value={val}>{lbl}</option>
+          ))}
+        </select>
+      </div>
+
+      {dateFilter === 'custom' && (
+        <div className="custom-range-picker">
+          <input
+            type="date"
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+            max={customEnd || undefined}
+          />
+          <span>—</span>
+          <input
+            type="date"
+            value={customEnd}
+            onChange={(e) => setCustomEnd(e.target.value)}
+            min={customStart || undefined}
+          />
+        </div>
+      )}
 
       <div className="stats-grid">
         <StatCard  label="Total Pendapatan" value={formatCurrency(stats.totalRevenue)} accent="var(--primary)" />

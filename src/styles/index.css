@@ -400,6 +400,71 @@ tr:hover td { background: var(--surface-container); }
 .badge-cancel { background: #ffebee; color: #c62828; box-shadow: 0 0 8px rgba(198, 40, 40, 0.1); }
 
 /* ══════════════════════════════════════
+   DATE FILTER
+   ══════════════════════════════════════ */
+.date-filter-bar {
+  display: flex;
+  margin-bottom: 16px;
+}
+.date-filter-select {
+  padding: 10px 36px 10px 16px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: 1.5px solid var(--outline-variant);
+  background: var(--surface);
+  color: var(--primary);
+  cursor: pointer;
+  font-family: 'Manrope', sans-serif;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 180px;
+}
+.date-filter-select:hover {
+  border-color: var(--primary-container);
+  background: var(--surface-container);
+}
+.date-filter-select:focus {
+  outline: none;
+  border-color: var(--primary-container);
+  background: #fff;
+  box-shadow: 0 0 0 3px var(--glow-primary);
+}
+
+.custom-range-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.custom-range-picker input[type="date"] {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--outline-variant);
+  font-size: 13px;
+  font-family: 'Manrope', sans-serif;
+  color: var(--on-surface);
+  background: var(--surface);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.custom-range-picker input[type="date"]:focus {
+  outline: none;
+  border-color: var(--primary-container);
+  background: #fff;
+  box-shadow: 0 0 0 3px var(--glow-primary);
+}
+.custom-range-picker span {
+  color: var(--outline);
+  font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  .date-filter-select { min-width: 0; width: 100%; font-size: 12.5px; padding: 9px 32px 9px 14px; }
+  .custom-range-picker { gap: 6px; }
+  .custom-range-picker input[type="date"] { padding: 7px 10px; font-size: 12px; flex: 1; min-width: 0; }
+}
+
+/* ══════════════════════════════════════
    STATS
    ══════════════════════════════════════ */
 .stats-grid {
@@ -1962,5 +2027,43 @@ tr:hover td { background: var(--surface-container); }
   .login-bottom-text {
     margin-top: 16px;
     font-size: 10px;
+  }
+}
+
+/* ══════════════════════════════════════════
+   INVOICE ITEM GRID — Responsive Layout
+   ══════════════════════════════════════════ */
+.invoice-item-grid {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+@media (max-width: 600px) {
+  .invoice-item-grid {
+    grid-template-columns: 1fr 2fr auto;
+    gap: 12px;
+  }
+  
+  .invoice-item-grid > div:nth-child(1) {
+    grid-column: span 1;
+  }
+  
+  .invoice-item-grid > div:nth-child(2) {
+    grid-column: span 2;
+  }
+  
+  .invoice-item-grid > div:nth-child(3) {
+    grid-column: span 2;
+  }
+  
+  .invoice-item-grid > button {
+    grid-column: span 1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 41px;
   }
 }

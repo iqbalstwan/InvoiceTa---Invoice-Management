@@ -194,6 +194,7 @@ const [form, setForm] = useState({
 });
 
 const [canCreate, setCanCreate] = useState(true);
+const [quotaInfo, setQuotaInfo] = useState({ count: 0, limit: 10, credits: 0, useCredit: false });
 const [pickerForItem, setPickerForItem] = useState(null); // item.id or null
 
 useEffect(() => {
@@ -237,15 +238,9 @@ const loadSettingsAndProducts = async () => {
 
 const checkLimit = async () => {
   try {
-    const { count } = await supabaseClient
-      .from('invoices')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id);
-
-    const limit = subscription?.subscription_plans?.invoice_limit || 5;
-    if (limit !== -1 && count >= limit) {
-      setCanCreate(false);
-    }
+    const res = await checkInvoiceLimit(user.id);
+    setCanCreate(res.canCreate);
+    setQuotaInfo(res);
   } catch (error) {
     console.error('Error checking limit:', error);
   }
@@ -324,9 +319,13 @@ const handleCreateInvoice = async () => {
     );
 
    
+    const userUpdates = { next_invoice_number: nextInvoiceNumber + 1 };
+    if (quotaInfo.useCredit) {
+      userUpdates.invoice_credits = Math.max(0, quotaInfo.credits - 1);
+    }
     await supabaseClient
       .from('users')
-      .update({ next_invoice_number: nextInvoiceNumber + 1 })
+      .update(userUpdates)
       .eq('id', user.id);
 
     showToast('Invoice berhasil dibuat!', 'success');
@@ -364,12 +363,17 @@ if (!canCreate) {
         <h2 style={{ fontFamily: "'Source Serif 4', serif", fontSize: 24, fontWeight: 700, color: 'var(--primary)', marginBottom: 12 }}>
           Batas Invoice Tercapai
         </h2>
-        <p style={{ color: 'var(--on-surface-variant)', marginBottom: 32, maxWidth: 400, margin: '0 auto 32px' }}>
-          Anda telah mencapai batas pembuatan invoice ({subscription?.subscription_plans?.invoice_limit} invoice/bulan). Upgrade paket untuk invoice tak terbatas.
+        <p style={{ color: 'var(--on-surface-variant)', marginBottom: 32, maxWidth: 400, margin: '0 auto 32px', lineHeight: 1.6 }}>
+          Anda telah mencapai batas kuota pembuatan invoice bulan ini ({quotaInfo.limit} invoice/bulan). 
+          {quotaInfo.credits > 0 ? (
+            <span style={{ display: 'block', color: 'var(--error)', fontWeight: 600, marginTop: 8 }}>
+              ⚠️ Anda memiliki saldo {quotaInfo.credits} Credits Add-on, namun dibekukan karena tidak memiliki langganan bulanan aktif. Silakan upgrade/berlangganan kembali untuk menggunakannya.
+            </span>
+          ) : ' Silakan upgrade paket bulanan atau beli Add-on kuota invoice untuk terus dapat membuat invoice.'}
         </p>
         <button className="btn btn-primary" onClick={() => setCurrentPage?.('pricing')}>
           <Sparkles size={16} />
-          Upgrade Sekarang
+          Upgrade / Beli Add-on
         </button>
       </div>
     </div>
@@ -380,6 +384,29 @@ return (
   <div>
     <h1 className="page-title">Buat Invoice</h1>
     <p className="page-sub">Isi detail invoice dan pilih produk/jasa yang dijual</p>
+
+    <div style={{
+      background: 'var(--surface-container)',
+      borderRadius: 12,
+      padding: '12px 18px',
+      marginBottom: 20,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: 12,
+      fontSize: 12.5,
+      color: 'var(--on-surface-variant)',
+      border: '1px solid var(--outline-variant)',
+      animation: 'fadeInUp 0.3s ease both'
+    }}>
+      <div>
+        <span>Kuota Bulan Ini: <strong>{quotaInfo.count} / {quotaInfo.limit}</strong> Invoice</span>
+      </div>
+      <div>
+        <span>Add-on: <strong>{quotaInfo.credits} Credits</strong> {quotaInfo.useCredit && <span style={{ color: 'var(--success)', fontWeight: 700 }}> (Digunakan)</span>}</span>
+      </div>
+    </div>
 
     <div className="card animate-fade-in-up">
       
@@ -541,7 +568,7 @@ return (
               </div>
 
              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 12, alignItems: 'end' }}>
+              <div className="invoice-item-grid">
                 <div>
                   <label className="form-label" style={{ fontSize: 10, marginBottom: 4 }}>Qty</label>
                   <input

@@ -210,8 +210,8 @@ export default function Products({ subscription }) {
                   className="form-input"
                   style={{ width: '100%' }}
                 >
-                  <option>Services</option>
                   <option>Products</option>
+                  <option>Services</option>
                   <option>Consultation</option>
                   <option>Design</option>
                   <option>Development</option>
